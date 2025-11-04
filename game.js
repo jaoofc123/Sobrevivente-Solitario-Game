@@ -1,4 +1,3 @@
-// Aguarda o HTML carregar antes de rodar o jogo
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- Referências aos Elementos HTML ---
@@ -7,63 +6,86 @@ document.addEventListener('DOMContentLoaded', () => {
     const energiaBar = document.getElementById('energia-bar');
     const energiaValor = document.getElementById('energia-valor');
     const comidaStat = document.getElementById('comida-stat');
+    const madeiraStat = document.getElementById('madeira-stat');
+    const baseStat = document.getElementById('base-stat');
     const diaStatus = document.getElementById('dia-status');
     const logArea = document.getElementById('log-area');
 
     const btnCacar = document.getElementById('btn-cacar');
+    const btnMadeira = document.getElementById('btn-madeira');
     const btnDescansar = document.getElementById('btn-descansar');
     const btnComer = document.getElementById('btn-comer');
+    const btnBase = document.getElementById('btn-base');
 
     // --- Variáveis de Estado do Jogo ---
     let vida = 100;
     let energia = 100;
     let comida = 3;
+    let madeira = 0;
+    let nivelBase = 0;
     let dia = 1;
-    const diasObjetivo = 7;
+    const diasObjetivo = 100;
     let jogoAtivo = true;
 
-    // --- Funções Principais de Ação ---
+    // --- Funções de Ação (Que passam o dia) ---
 
     function cacar() {
-        if (!jogoAtivo) return;
-
         const custoEnergia = 20;
-        if (energia >= custoEnergia) {
-            energia -= custoEnergia;
-            adicionarLog("Você gasta energia caçando...", "log-normal");
-            
-            // Simula o sucesso da caça
-            setTimeout(() => {
-                const sucessoCaca = Math.floor(Math.random() * 4); // 0 a 3
-                if (sucessoCaca > 0) {
-                    comida += sucessoCaca;
-                    adicionarLog(`BOA! Você conseguiu ${sucessoCaca} porções de comida.`, "log-bom");
-                } else {
-                    adicionarLog("DROGA! Você não encontrou nada.", "log-ruim");
-                }
-                proximoTurno(); // Avança para o fim do dia
-            }, 1000); // A caça leva 1 segundo
-        } else {
+        if (energia < custoEnergia) {
             adicionarLog("Você está cansado demais para caçar.", "log-evento");
+            return;
         }
+
+        energia -= custoEnergia;
+        adicionarLog("Você gasta o dia caçando...", "log-normal");
+
+        setTimeout(() => {
+            const sucessoCaca = Math.floor(Math.random() * 4); // 0 a 3
+            if (sucessoCaca > 0) {
+                comida += sucessoCaca;
+                adicionarLog(`BOA! Você conseguiu ${sucessoCaca} porções de comida.`, "log-bom");
+            } else {
+                adicionarLog("DROGA! Você não encontrou nada.", "log-ruim");
+            }
+            proximoTurno(); // Avança para o fim do dia
+        }, 500);
+    }
+
+    function coletarMadeira() {
+        const custoEnergia = 15;
+        if (energia < custoEnergia) {
+            adicionarLog("Você está cansado demais para coletar madeira.", "log-evento");
+            return;
+        }
+
+        energia -= custoEnergia;
+        adicionarLog("Você passa o dia cortando madeira...", "log-normal");
+
+        setTimeout(() => {
+            const ganhoMadeira = Math.floor(Math.random() * 3) + 1; // 1 a 3
+            madeira += ganhoMadeira;
+            adicionarLog(`Você coletou ${ganhoMadeira} de madeira.`, "log-bom");
+            proximoTurno();
+        }, 500);
     }
 
     function descansar() {
-        if (!jogoAtivo) return;
-
         const custoEnergia = 5;
-        if (energia >= custoEnergia) {
-            energia -= custoEnergia;
-            let vidaRecuperada = Math.floor(Math.random() * 21) + 10; // 10 a 30
-            vida += vidaRecuperada;
-            if (vida > 100) vida = 100;
-            
-            adicionarLog(`Você descansou e recuperou ${vidaRecuperada} de vida.`, "log-bom");
-            proximoTurno();
-        } else {
+        if (energia < custoEnergia) {
             adicionarLog("Você precisa de um mínimo de 5 de energia para descansar.", "log-evento");
+            return;
         }
+        
+        energia -= custoEnergia;
+        let vidaRecuperada = Math.floor(Math.random() * 21) + 15; // 15 a 35
+        vida += vidaRecuperada;
+        if (vida > 100) vida = 100;
+        
+        adicionarLog(`Você passou o dia descansando e recuperou ${vidaRecuperada} de vida.`, "log-bom");
+        proximoTurno();
     }
+
+    // --- Funções de Ação (Grátis - Não passam o dia) ---
 
     function comer() {
         if (!jogoAtivo) return;
@@ -75,9 +97,23 @@ document.addEventListener('DOMContentLoaded', () => {
             if (energia > 100) energia = 100;
             
             adicionarLog(`Você comeu e recuperou ${energiaRecuperada} de energia.`, "log-bom");
-            proximoTurno();
+            atualizarStatus(); // Atualiza imediatamente
         } else {
             adicionarLog("Você não tem comida no inventário!", "log-ruim");
+        }
+    }
+
+    function melhorarBase() {
+        if (!jogoAtivo) return;
+
+        const custoBase = (nivelBase + 1) * 10;
+        if (madeira >= custoBase) {
+            madeira -= custoBase;
+            nivelBase++;
+            adicionarLog(`VOCÊ MELHOROU SUA BASE! (Nível ${nivelBase})`, "log-bom");
+            atualizarStatus(); // Atualiza imediatamente
+        } else {
+            adicionarLog(`Você precisa de ${custoBase} de madeira para melhorar a base.`, "log-ruim");
         }
     }
 
@@ -87,11 +123,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!jogoAtivo) return;
 
         // 1. Metabolismo (Passagem do tempo)
-        energia -= 15; // Gasto base por noite
+        // A base torna a noite mais fácil!
+        let gastoMetabolismo = 15 - (nivelBase * 2); // Nv1 gasta 13, Nv2 gasta 11...
+        if (gastoMetabolismo < 5) gastoMetabolismo = 5; // Gasto mínimo
+        
+        energia -= gastoMetabolismo;
+        if (nivelBase > 0) {
+            adicionarLog(`Seu abrigo (Nv.${nivelBase}) te protegeu do frio. Você economizou energia.`, "log-bom");
+        }
 
         // 2. Verificar Fome/Exaustão
         if (energia <= 0) {
-            energia = 0; // Não pode ficar negativo
+            energia = 0;
             adicionarLog("Você está exausto e faminto! Sua vida está diminuindo.", "log-ruim");
             vida -= 10;
         }
@@ -103,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (vida <= 0) {
             vida = 0;
             gameOver();
-            return; // Para o jogo
+            return;
         }
 
         // 5. Avançar o Dia
@@ -113,39 +156,50 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Atualiza a interface
         atualizarStatus();
     }
 
     function eventoAleatorio() {
-        const chance = Math.random(); // Um número entre 0.0 e 1.0
+        const chance = Math.random();
+        
+        // A base (Nível 2+) oferece proteção contra eventos
+        if (nivelBase >= 2) {
+            let chanceProtecao = (nivelBase - 1) * 0.25; // Nv2=25%, Nv3=50%...
+            if (Math.random() < chanceProtecao) {
+                adicionarLog("Uma tempestade se formou, mas sua base (Nv." + nivelBase + ") protegeu você.", "log-bom");
+                return; // O evento ruim é evitado
+            }
+        }
 
-        if (chance < 0.15) { // 15% chance
-            adicionarLog("[EVENTO] Um lobo te ataca durante a noite!", "log-evento");
+        // Escala de dificuldade dos eventos
+        if (dia > 5 && chance < 0.15) { // 15% Ataque
+            adicionarLog("[EVENTO] Um animal selvagem te ataca durante a noite!", "log-evento");
             let dano = Math.floor(Math.random() * 20) + 10; // 10-29 dano
             vida -= dano;
             adicionarLog(`Você foi ferido e perdeu ${dano} de vida.`, "log-ruim");
-        } else if (chance < 0.30) { // 15% chance
-            adicionarLog("[EVENTO] Uma tempestade terrível! Você não dormiu bem.", "log-evento");
+        } else if (chance < 0.30) { // 15% Tempestade (cansaço)
+            adicionarLog("[EVENTO] Uma tempestade terrível! Você acorda cansado.", "log-evento");
             energia -= 20;
             adicionarLog("Você perdeu 20 de energia extra.", "log-ruim");
-        } else if (chance < 0.40) { // 10% chance
-            adicionarLog("[EVENTO] Você foi picado por uma cobra venenosa!", "log-evento");
-            vida -= 30;
-            adicionarLog("Você perdeu 30 de vida!", "log-ruim");
-        } else if (chance < 0.55) { // 15% chance
-            adicionarLog("[EVENTO] Você encontrou uma fonte de água fresca!", "log-bom");
-            vida += 10;
-            energia += 10;
-        } else if (chance < 0.65) { // 10% chance
-            adicionarLog("[EVENTO] Você encontrou frutas silvestres!", "log-bom");
-            comida += 1;
+        } else if (dia > 10 && chance < 0.40 && nivelBase > 0) { // 10% Dano na base
+            adicionarLog("[EVENTO] Ventos fortes danificaram seu abrigo!", "log-evento");
+            nivelBase--;
+            adicionarLog("Sua base foi rebaixada para o Nível " + nivelBase, "log-ruim");
+        } else if (dia > 30 && chance < 0.45 && nivelBase > 2) { // 5% Desastre na base
+            adicionarLog("[DESASTRE] Uma árvore caiu sobre seu abrigo!", "log-evento");
+            nivelBase = 1; // Destrói a base, mas não totalmente
+            adicionarLog("Sua base foi quase destruída! (Nível 1)", "log-ruim");
+        } else if (chance > 0.9) { // 10% Sorte
+            adicionarLog("[SORTE] Você encontrou um baú naufragado!", "log-bom");
+            comida += 3;
+            madeira += 5;
         }
-        // Se nada acontecer (35% de chance), é uma noite tranquila.
 
-        // Garante que os status não passem de 100
+        // Garante que os status não passem de 100 ou fiquem abaixo de 0
         if (vida > 100) vida = 100;
         if (energia > 100) energia = 100;
+        if (energia < 0) energia = 0;
+        if (vida < 0) vida = 0;
     }
 
     // --- Funções de Utilidade ---
@@ -153,9 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function adicionarLog(mensagem, tipo = "log-normal") {
         const logEntry = document.createElement('p');
         logEntry.textContent = mensagem;
-        logEntry.className = tipo; // Adiciona a classe CSS
-        
-        // Adiciona a nova mensagem no topo da lista
+        logEntry.className = tipo;
         logArea.prepend(logEntry);
     }
 
@@ -168,6 +220,20 @@ document.addEventListener('DOMContentLoaded', () => {
         vidaValor.textContent = `${vida}/100`;
         energiaValor.textContent = `${energia}/100`;
         comidaStat.textContent = comida;
+        madeiraStat.textContent = madeira;
+        
+        // Lógica da Base
+        let nomeBase = "Nenhuma (Nv. 0)";
+        if (nivelBase === 1) nomeBase = "Cabana Fraca (Nv. 1)";
+        else if (nivelBase === 2) nomeBase = "Abrigo (Nv. 2)";
+        else if (nivelBase === 3) nomeBase = "Reforçada (Nv. 3)";
+        else if (nivelBase >= 4) nomeBase = `Fortaleza (Nv. ${nivelBase})`;
+        baseStat.textContent = nomeBase;
+
+        // Atualiza custo do botão da base
+        btnBase.textContent = `Melhorar Base (Custa ${(nivelBase + 1) * 10} Madeira)`;
+
+        // Atualiza status do dia
         diaStatus.textContent = `Dia ${dia} de ${diasObjetivo}`;
     }
 
@@ -176,6 +242,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCacar.disabled = true;
         btnDescansar.disabled = true;
         btnComer.disabled = true;
+        btnMadeira.disabled = true;
+        btnBase.disabled = true;
     }
 
     function gameOver() {
@@ -187,16 +255,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function gameWin() {
         desativarBotoes();
-        adicionarLog("PARABÉNS! VOCÊ SOBREVIVEU!", "log-vitoria");
-        diaStatus.textContent = `Você sobreviveu aos ${diasObjetivo} dias!`;
+        adicionarLog("PARABÉNS! VOCÊ SOBREVIVEU AOS 100 DIAS!", "log-vitoria");
+        diaStatus.textContent = `Você completou o desafio!`;
         atualizarStatus();
     }
 
     // --- Inicialização do Jogo ---
-    atualizarStatus(); // Define os valores iniciais na tela
+    atualizarStatus();
     
     // Conecta as ações aos botões
     btnCacar.addEventListener('click', cacar);
+    btnMadeira.addEventListener('click', coletarMadeira);
     btnDescansar.addEventListener('click', descansar);
     btnComer.addEventListener('click', comer);
+    btnBase.addEventListener('click', melhorarBase);
 });
