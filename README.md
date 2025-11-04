@@ -1,1 +1,0 @@
-# Sobrevivente-Solitario-Game

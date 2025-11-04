@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sobrevivente Solitário</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="game-container">
+        <h1>Sobrevivente Solitário</h1>
+        <h2 id="dia-status">Dia 1 de 7</h2>
+
+        <div id="status-bars">
+            <div class="stat-bar">
+                <label>Vida:</label>
+                <progress id="vida-bar" max="100" value="100"></progress>
+                <span id="vida-valor">100/100</span>
+            </div>
+            <div class="stat-bar">
+                <label>Energia:</label>
+                <progress id="energia-bar" max="100" value="100"></progress>
+                <span id="energia-valor">100/100</span>
+            </div>
+        </div>
+
+        <div id="inventario">
+            <strong>Comida: </strong><span id="comida-stat">3</span>
+        </div>
+
+        <div id="botoes-acao">
+            <button id="btn-cacar">Caçar (Gasta 20 Energia)</button>
+            <button id="btn-descansar">Descansar (Gasta 5 Energia)</button>
+            <button id="btn-comer">Comer (Recupera 50 Energia)</button>
+        </div>
+
+        <div id="log-container">
+            <h3>Diário de Bordo</h3>
+            <div id="log-area">
+                <p class="log-inicio">Você acordou em uma ilha deserta.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
