@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sobrevivente Solitário</title>
+    <title>Sobrevivente: A Longa Jornada</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="game-container">
-        <h1>Sobrevivente Solitário</h1>
-        <h2 id="dia-status">Dia 1 de 7</h2>
+        <h1>Sobrevivente: A Longa Jornada</h1>
+        <h2 id="dia-status">Dia 1 de 100</h2>
 
         <div id="status-bars">
             <div class="stat-bar">
@@ -25,19 +25,24 @@
         </div>
 
         <div id="inventario">
-            <strong>Comida: </strong><span id="comida-stat">3</span>
+            <span><strong>Comida: </strong><span id="comida-stat">3</span></span>
+            <span><strong>Madeira: </strong><span id="madeira-stat">0</span></span>
+            <span><strong>Base: </strong><span id="base-stat">Nenhuma (Nv. 0)</span></span>
         </div>
 
         <div id="botoes-acao">
-            <button id="btn-cacar">Caçar (Gasta 20 Energia)</button>
-            <button id="btn-descansar">Descansar (Gasta 5 Energia)</button>
-            <button id="btn-comer">Comer (Recupera 50 Energia)</button>
+            <button id="btn-cacar">Caçar (Custa 20 Energia)</button>
+            <button id="btn-madeira">Coletar Madeira (Custa 15 Energia)</button>
+            <button id="btn-descansar">Descansar (Custa 5 Energia)</button>
+            
+            <button id="btn-comer">Comer (Recupera Energia)</button>
+            <button id="btn-base" class="btn-upgrade">Melhorar Base (Custa 10 Madeira)</button>
         </div>
 
         <div id="log-container">
             <h3>Diário de Bordo</h3>
             <div id="log-area">
-                <p class="log-inicio">Você acordou em uma ilha deserta.</p>
+                <p class="log-inicio">Você acordou em uma ilha deserta. O objetivo agora é sobreviver 100 dias.</p>
             </div>
         </div>
     </div>
