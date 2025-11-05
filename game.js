@@ -138,27 +138,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ganhoMadeira = Math.floor(Math.random() * 3) + 1;
                 madeira += ganhoMadeira;
                 adicionarLog(`Você coletou ${ganhoMadeira} de madeira.`, "log-bom");
-                cacasConsecutivas = 0; // Reseta o cooldown de caça
+                cacasConsecutivas = 0;
             }
         );
     });
 
-    // DESCANSAR (Custo 0 Energia - Conserta o "soft-lock")
+    // ==========================================================
+    // ===== MUDANÇA: DESCANSAR (Custo 10 Energia) =====
+    // ==========================================================
     btnDescansar.addEventListener('click', () => {
+        const custoEnergia = 10;
+        if (energia < custoEnergia) {
+            adicionarLog(`Você precisa de pelo menos ${custoEnergia} de energia para descansar.`, "log-evento");
+            return; // Bloqueia se não tiver energia
+        }
+
+        // Paga o custo (sem risco de vida)
+        energia -= custoEnergia;
+
         realizarAcao(1,
             () => { // fnSucesso
-                let vidaRecuperada = Math.floor(Math.random() * 11) + 10; // Cura 10-20
+                let vidaRecuperada = 20; // MUDANÇA: Cura fixa de 20
                 vida += vidaRecuperada;
                 if (vida > 100) vida = 100;
                 adicionarLog(`Você descansou e recuperou ${vidaRecuperada} de vida.`, "log-bom");
-                cacasConsecutivas = 0; // Reseta o cooldown de caça
+                cacasConsecutivas = 0;
             }
         );
     });
-    
     // ==========================================================
-    // ===== BUGFIX: LÓGICA DE MELHORAR BASE (CORRIGIDA) =====
+    // ===== FIM DA MUDANÇA =====
     // ==========================================================
+
+    // MELHORAR BASE
     btnBase.addEventListener('click', async () => {
         if (!jogoAtivo || acaoEmProgresso) return;
         
@@ -173,39 +185,33 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        acaoEmProgresso = true; // TRAVA
+        acaoEmProgresso = true;
         madeira -= custoBaseMadeira;
         nivelBase++;
-        pontosAcaoAtuais = 0; // Gasta todos os PAs
-        cacasConsecutivas = 0; // Reseta o cooldown de caça
+        pontosAcaoAtuais = 0;
+        cacasConsecutivas = 0;
         adicionarLog(`VOCÊ PASSA O DIA MELHORANDO SUA BASE! (Nível ${nivelBase})`, "log-bom");
         
-        atualizarStatus(); // CORREÇÃO 1: Atualiza a UI (mostra PA=0 e desativa botões)
+        atualizarStatus(); 
 
         await new Promise(r => setTimeout(r, 500));
-
-        await proximoTurno(); // Passa a noite
+        await proximoTurno();
         
-        if (jogoAtivo) { // Se sobreviveu
+        if (jogoAtivo) {
             dia++;
-            pontosAcaoAtuais = PONTOS_ACAO_POR_DIA; // Renova os 4 PA
+            pontosAcaoAtuais = PONTOS_ACAO_POR_DIA;
         }
         
-        acaoEmProgresso = false; // DESTRAVA
+        acaoEmProgresso = false;
         
-        // CORREÇÃO 2: A chamada final ao atualizarStatus() DEVE ficar aqui,
-        // depois que acaoEmProgresso = false, para reativar os botões.
         if (jogoAtivo) {
              if (dia > diasObjetivo) {
                 gameWin();
             } else {
-                atualizarStatus(); // Reativa os botões para o novo dia
+                atualizarStatus();
             }
         }
     });
-    // ==========================================================
-    // ===== FIM DO BUGFIX =====
-    // ==========================================================
 
     // COMER
     btnComer.addEventListener('click', () => {
@@ -405,10 +411,10 @@ document.addEventListener('DOMContentLoaded', () => {
         diaStatus.textContent = `Dia ${dia} de ${diasObjetivo}`;
         
         // MUDANÇA: Lógica de desativar botões
-        // Agora verifica o cooldown de caça
         btnCacar.disabled = (acaoEmProgresso || cacasConsecutivas >= 2);
         btnMadeira.disabled = acaoEmProgresso;
-        btnDescansar.disabled = acaoEmProgresso;
+        // MUDANÇA: Agora checa se tem 10 de energia
+        btnDescansar.disabled = (energia < 10 || acaoEmProgresso);
         btnBase.disabled = (madeira < (nivelBase + 1) * 10 || pontosAcaoAtuais < 4 || acaoEmProgresso);
         btnComer.disabled = (carne <= 0 || acaoEmProgresso);
     }
