@@ -43,13 +43,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const PONTOS_ACAO_POR_DIA = 4;
     let pontosAcaoAtuais = PONTOS_ACAO_POR_DIA;
     
-    // MUDANÇA: Variável para o Cooldown de Caça
     let cacasConsecutivas = 0;
     
     let jogoAtivo = true;
     let acaoEmProgresso = false;
 
-    // --- Função Mestra de Ação (Refatorada) ---
+    // --- Função Mestra de Ação ---
     async function realizarAcao(custoPA, fnSucesso) {
         if (!jogoAtivo || acaoEmProgresso) return;
 
@@ -69,7 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (jogoAtivo) {
                 dia++;
                 pontosAcaoAtuais = PONTOS_ACAO_POR_DIA - dividaAcao;
-                
                 if (dividaAcao > 0) {
                     adicionarLog(`Você começou o dia "negativado" com ${pontosAcaoAtuais} PA.`, "log-evento");
                 }
@@ -91,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function pagarCustoEnergia(custoEnergia, custoVida) {
         if (energia >= custoEnergia) {
             energia -= custoEnergia;
-            return true; // Pagou com energia
+            return true;
         } else {
             adicionarLog(`Sem energia! Você força o limite, custando ${custoVida} de Vida.`, "log-ruim");
             energia = 0;
@@ -101,44 +99,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 gameOver(); 
                 return false;
             }
-            return true; // Pagou com vida
+            return true;
         }
     }
 
     // --- Ações Específicas (Atualizadas) ---
 
-    // CAÇAR: Custo 3 PA, 20 Energia (ou 10 Vida)
+    // CAÇAR
     btnCacar.addEventListener('click', () => {
-        // MUDANÇA: Verificação do Cooldown
         if (cacasConsecutivas >= 2) {
-            adicionarLog("Você caçou demais e assustou os animais. Descanse ou faça outra atividade.", "log-ruim");
+            adicionarLog("Você caçou demais e assustou os animais. Faça outra atividade.", "log-ruim");
             return;
         }
-
         if (!pagarCustoEnergia(20, 10)) return;
         
         realizarAcao(3, 
             () => { // fnSucesso
                 let carnesGanhas = 0;
                 const chance = Math.random();
-                if (chance < 0.35) {
-                    carnesGanhas = 1;
-                } else if (chance < 0.65) {
-                    carnesGanhas = 2;
-                } else if (chance < 0.85) {
-                    carnesGanhas = 3;
-                } else {
-                    carnesGanhas = 4;
-                }
+                if (chance < 0.35) carnesGanhas = 1;
+                else if (chance < 0.65) carnesGanhas = 2;
+                else if (chance < 0.85) carnesGanhas = 3;
+                else carnesGanhas = 4;
                 
                 carne += carnesGanhas;
                 adicionarLog(`BOA! Você conseguiu ${carnesGanhas} carne(s).`, "log-bom");
-                cacasConsecutivas++; // MUDANÇA: Incrementa o contador de caça
+                cacasConsecutivas++;
             }
         );
     });
 
-    // COLETAR MADEIRA: Custo 2 PA, 15 Energia (ou 10 Vida)
+    // COLETAR MADEIRA
     btnMadeira.addEventListener('click', () => {
         if (!pagarCustoEnergia(15, 10)) return;
 
@@ -147,27 +138,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ganhoMadeira = Math.floor(Math.random() * 3) + 1;
                 madeira += ganhoMadeira;
                 adicionarLog(`Você coletou ${ganhoMadeira} de madeira.`, "log-bom");
-                cacasConsecutivas = 0; // MUDANÇA: Reseta o cooldown de caça
+                cacasConsecutivas = 0; // Reseta o cooldown de caça
             }
         );
     });
 
-    // DESCANSAR: Custo 1 PA, 0 Energia
+    // DESCANSAR (Custo 0 Energia - Conserta o "soft-lock")
     btnDescansar.addEventListener('click', () => {
-        // MUDANÇA: Custo de energia removido. Conserto do "Soft-Lock".
         realizarAcao(1,
             () => { // fnSucesso
-                // MUDANÇA: Cura reduzida (balanceamento)
-                let vidaRecuperada = Math.floor(Math.random() * 11) + 10; // 10 a 20 de vida
+                let vidaRecuperada = Math.floor(Math.random() * 11) + 10; // Cura 10-20
                 vida += vidaRecuperada;
                 if (vida > 100) vida = 100;
                 adicionarLog(`Você descansou e recuperou ${vidaRecuperada} de vida.`, "log-bom");
-                cacasConsecutivas = 0; // MUDANÇA: Reseta o cooldown de caça
+                cacasConsecutivas = 0; // Reseta o cooldown de caça
             }
         );
     });
     
-    // MELHORAR BASE: Custo 4 PA (Dia inteiro), 0 Energia
+    // ==========================================================
+    // ===== BUGFIX: LÓGICA DE MELHORAR BASE (CORRIGIDA) =====
+    // ==========================================================
     btnBase.addEventListener('click', async () => {
         if (!jogoAtivo || acaoEmProgresso) return;
         
@@ -182,31 +173,41 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        acaoEmProgresso = true;
+        acaoEmProgresso = true; // TRAVA
         madeira -= custoBaseMadeira;
         nivelBase++;
         pontosAcaoAtuais = 0; // Gasta todos os PAs
-        cacasConsecutivas = 0; // MUDANÇA: Reseta o cooldown de caça
+        cacasConsecutivas = 0; // Reseta o cooldown de caça
         adicionarLog(`VOCÊ PASSA O DIA MELHORANDO SUA BASE! (Nível ${nivelBase})`, "log-bom");
         
+        atualizarStatus(); // CORREÇÃO 1: Atualiza a UI (mostra PA=0 e desativa botões)
+
         await new Promise(r => setTimeout(r, 500));
 
-        await proximoTurno();
+        await proximoTurno(); // Passa a noite
         
-        if (jogoAtivo) {
+        if (jogoAtivo) { // Se sobreviveu
             dia++;
-            pontosAcaoAtuais = PONTOS_ACAO_POR_DIA;
-            atualizarStatus();
+            pontosAcaoAtuais = PONTOS_ACAO_POR_DIA; // Renova os 4 PA
         }
         
-        acaoEmProgresso = false;
+        acaoEmProgresso = false; // DESTRAVA
         
-        if (jogoAtivo && dia > diasObjetivo) {
-            gameWin();
+        // CORREÇÃO 2: A chamada final ao atualizarStatus() DEVE ficar aqui,
+        // depois que acaoEmProgresso = false, para reativar os botões.
+        if (jogoAtivo) {
+             if (dia > diasObjetivo) {
+                gameWin();
+            } else {
+                atualizarStatus(); // Reativa os botões para o novo dia
+            }
         }
     });
+    // ==========================================================
+    // ===== FIM DO BUGFIX =====
+    // ==========================================================
 
-    // COMER: Custo 0 PA, 0 Energia
+    // COMER
     btnComer.addEventListener('click', () => {
         if (!jogoAtivo || acaoEmProgresso) return;
         if (carne > 0) {
@@ -293,11 +294,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let madeiraEncontrada = 0;
             
             for (let i = 0; i < itensEncontrados; i++) {
-                if (Math.random() < 0.6) {
-                    carneEncontrada++;
-                } else {
-                    madeiraEncontrada++;
-                }
+                if (Math.random() < 0.6) carneEncontrada++;
+                else madeiraEncontrada++;
             }
             carne += carneEncontrada;
             madeira += madeiraEncontrada;
@@ -407,9 +405,10 @@ document.addEventListener('DOMContentLoaded', () => {
         diaStatus.textContent = `Dia ${dia} de ${diasObjetivo}`;
         
         // MUDANÇA: Lógica de desativar botões
+        // Agora verifica o cooldown de caça
         btnCacar.disabled = (acaoEmProgresso || cacasConsecutivas >= 2);
         btnMadeira.disabled = acaoEmProgresso;
-        btnDescansar.disabled = acaoEmProgresso; // Não depende mais de energia
+        btnDescansar.disabled = acaoEmProgresso;
         btnBase.disabled = (madeira < (nivelBase + 1) * 10 || pontosAcaoAtuais < 4 || acaoEmProgresso);
         btnComer.disabled = (carne <= 0 || acaoEmProgresso);
     }
