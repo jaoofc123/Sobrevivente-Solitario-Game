@@ -1,6 +1,6 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #f0f2f5;
+    background-color: #333; /* Fundo mais escuro */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -16,6 +16,7 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     padding: 25px;
     border: 1px solid #ddd;
+    position: relative; 
 }
 
 h1 {
@@ -32,29 +33,14 @@ h2 {
 }
 
 /* Barras de Status */
-.stat-bar {
-    margin: 15px 0;
-}
-.stat-bar label {
-    font-weight: bold;
-    margin-bottom: 5px;
-    display: block;
-}
-progress {
-    width: 100%;
-    height: 25px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-}
+.stat-bar { margin: 15px 0; }
+.stat-bar label { font-weight: bold; margin-bottom: 5px; display: block; }
+progress { width: 100%; height: 25px; border-radius: 5px; border: 1px solid #ccc; }
 progress[id="vida-bar"]::-webkit-progress-bar { background-color: #fdd; }
 progress[id="vida-bar"]::-webkit-progress-value { background-color: #d9534f; }
 progress[id="energia-bar"]::-webkit-progress-bar { background-color: #dff; }
 progress[id="energia-bar"]::-webkit-progress-value { background-color: #5bc0de; }
-
-.stat-bar span {
-    font-size: 0.9em;
-    color: #666;
-}
+.stat-bar span { font-size: 0.9em; color: #666; }
 
 /* Inventário */
 #inventario {
@@ -65,9 +51,19 @@ progress[id="energia-bar"]::-webkit-progress-value { background-color: #5bc0de; 
     border-radius: 5px;
     padding: 10px;
     margin: 20px 0;
+    flex-wrap: wrap;
 }
-#inventario span {
-    font-size: 1em;
+#inventario span { font-size: 1em; margin: 5px; }
+
+/* ===== NOVO: PONTOS DE AÇÃO ===== */
+#acao-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+#acao-container h3 {
+    font-size: 3em;
+    color: #3c763d;
+    margin: 5px 0;
 }
 
 /* Botões de Ação */
@@ -79,7 +75,7 @@ progress[id="energia-bar"]::-webkit-progress-value { background-color: #5bc0de; 
 }
 #botoes-acao button {
     padding: 12px 15px;
-    font-size: 1em;
+    font-size: 0.9em; /* Menor para caber */
     font-weight: bold;
     cursor: pointer;
     border: none;
@@ -88,7 +84,7 @@ progress[id="energia-bar"]::-webkit-progress-value { background-color: #5bc0de; 
     color: white;
     transition: background-color 0.2s;
     margin: 5px;
-    flex-basis: 180px; /* Garante que os botões tenham um tamanho bom */
+    flex-basis: 45%; /* Botões ocupam quase metade */
 }
 #botoes-acao button:hover {
     background-color: #4a9d4a;
@@ -97,18 +93,22 @@ progress[id="energia-bar"]::-webkit-progress-value { background-color: #5bc0de; 
     background-color: #999;
     cursor: not-allowed;
 }
-/* Botão de Upgrade */
 .btn-upgrade {
     background-color: #f0ad4e !important;
 }
 .btn-upgrade:hover {
     background-color: #e6951d !important;
 }
+.btn-free {
+    background-color: #5bc0de !important;
+}
+.btn-free:hover {
+    background-color: #31b0d5 !important;
+}
+
 
 /* Área de Log */
-#log-container {
-    margin-top: 20px;
-}
+#log-container { margin-top: 20px; }
 #log-area {
     height: 150px;
     border: 1px solid #ddd;
@@ -119,14 +119,90 @@ progress[id="energia-bar"]::-webkit-progress-value { background-color: #5bc0de; 
     display: flex;
     flex-direction: column-reverse;
 }
-#log-area p {
-    margin: 5px 0;
-    padding: 5px;
-    border-radius: 3px;
-}
+#log-area p { margin: 5px 0; padding: 5px; border-radius: 3px; }
 .log-normal { color: #333; }
 .log-bom { background-color: #dff0d8; color: #3c763d; }
 .log-ruim { background-color: #f2dede; color: #a94442; }
 .log-evento { background-color: #fcf8e3; color: #8a6d3b; font-weight: bold; }
 .log-morte { background-color: #a94442; color: white; font-weight: bold; text-align: center; font-size: 1.2em;}
 .log-vitoria { background-color: #3c763d; color: white; font-weight: bold; text-align: center; font-size: 1.2em;}
+
+/* ===== ESTILOS DOS POP-UPS (OVERLAYS) ===== */
+#minigame-overlay, #alerta-overlay, #vitoria-overlay {
+    display: none; /* Começam invisíveis */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 100;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#minigame-container, #alerta-container, #vitoria-container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    max-width: 500px;
+}
+
+/* Estilos específicos do Minigame */
+#minigame-arena {
+    width: 400px;
+    max-width: 100%;
+    height: 250px;
+    background-color: #eee;
+    border: 2px solid #ccc;
+    position: relative;
+    overflow: hidden;
+}
+#minigame-alvo {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background-color: #d9534f;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: top 0.2s, left 0.2s;
+}
+#minigame-timer {
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #d9534f;
+    margin-top: 10px;
+}
+
+/* Estilos específicos do Alerta */
+#alerta-container h2 { color: #8a6d3b; }
+#alerta-container p { font-size: 1.1em; }
+#alerta-ok {
+    padding: 10px 20px;
+    font-size: 1em;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    background-color: #f0ad4e;
+    color: white;
+    margin-top: 15px;
+}
+
+/* Estilos específicos da Vitória */
+#vitoria-container {
+    background-color: #3c763d;
+    color: white;
+}
+#vitoria-container h2 {
+    color: white;
+    border-bottom: 1px solid #dff0d8;
+}
+#vitoria-container p {
+    font-size: 1.1em;
+    line-height: 1.6;
+}
