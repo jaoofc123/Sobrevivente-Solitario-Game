@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sobrevivente: A Longa Jornada</title>
+    <title>Sobrevivente: 365 Dias</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="game-container">
-        <h1>Sobrevivente: A Longa Jornada</h1>
-        <h2 id="dia-status">Dia 1 de 100</h2>
+        <h1>Sobrevivente: 365 Dias</h1>
+        <h2 id="dia-status">Dia 1 de 365</h2>
 
         <div id="status-bars">
             <div class="stat-bar">
@@ -29,21 +29,55 @@
             <span><strong>Madeira: </strong><span id="madeira-stat">0</span></span>
             <span><strong>Base: </strong><span id="base-stat">Nenhuma (Nv. 0)</span></span>
         </div>
+        
+        <div id="acao-container">
+            <strong>Ações Restantes no Dia:</strong>
+            <h3 id="pontos-acao-stat">4</h3>
+        </div>
 
         <div id="botoes-acao">
-            <button id="btn-cacar">Caçar (Custa 20 Energia)</button>
-            <button id="btn-madeira">Coletar Madeira (Custa 15 Energia)</button>
-            <button id="btn-descansar">Descansar (Custa 5 Energia)</button>
-            
-            <button id="btn-comer">Comer (Recupera Energia)</button>
-            <button id="btn-base" class="btn-upgrade">Melhorar Base (Custa 10 Madeira)</button>
+            <button id="btn-cacar">Caçar (Custa 3 PA, 20 Energia)</button>
+            <button id="btn-madeira">Coletar Madeira (Custa 2 PA, 15 Energia)</button>
+            <button id="btn-descansar">Descansar (Custa 1 PA, 5 Energia)</button>
+            <button id="btn-base" class="btn-upgrade">Melhorar Base (Custa 1 PA)</button>
+            <button id="btn-comer" class="btn-free">Comer (Ação Grátis)</button>
         </div>
 
         <div id="log-container">
             <h3>Diário de Bordo</h3>
             <div id="log-area">
-                <p class="log-inicio">Você acordou em uma ilha deserta. O objetivo agora é sobreviver 100 dias.</p>
+                <p class="log-inicio">Você acordou em uma ilha deserta. O objetivo agora é sobreviver 365 dias.</p>
             </div>
+        </div>
+    </div>
+
+    <div id="minigame-overlay">
+        <div id="minigame-container">
+            <h2>ATAQUE RÁPIDO!</h2>
+            <p>Clique no alvo para se defender!</p>
+            <div id="minigame-arena">
+                <div id="minigame-alvo"></div>
+            </div>
+            <div id="minigame-timer">Tempo: <span>3.0</span>s</div>
+        </div>
+    </div>
+    
+    <div id="alerta-overlay">
+        <div id="alerta-container">
+            <h2 id="alerta-titulo">EVENTO</h2>
+            <p id="alerta-mensagem">Uma tempestade terrível! Você acorda cansado.</p>
+            <button id="alerta-ok">OK</button>
+        </div>
+    </div>
+
+    <div id="vitoria-overlay">
+        <div id="vitoria-container">
+            <h2>VOCÊ SOBREVIVEU!</h2>
+            <p>Após 365 longos e exaustivos dias, você acorda com um som diferente no horizonte.</p>
+            <p>Um navio de pesquisa, que estava mapeando ilhas desconhecidas, vê a fumaça da sua fogueira.</p>
+            <p>Eles descem botes... Eles estão gritando por você.</p>
+            <p>Você não acredita. Você conseguiu. Você está indo para casa.</p>
+            <p><strong>FIM DE JOGO</strong></p>
         </div>
     </div>
 
