@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const baseStat = document.getElementById('base-stat');
     const diaStatus = document.getElementById('dia-status');
     const logArea = document.getElementById('log-area');
-    const pontosAcaoStat = document.getElementById('pontos-acao-stat');
+    const pontosAcaoStat = document.getElementById('pontos-acao-stat'); // Corrigido
 
     const btnCacar = document.getElementById('btn-cacar');
     const btnMadeira = document.getElementById('btn-madeira');
@@ -38,68 +38,65 @@ document.addEventListener('DOMContentLoaded', () => {
     let madeira = 0;
     let nivelBase = 0;
     let dia = 1;
-    const diasObjetivo = 365;
+    const diasObjetivo = 365; // META ATUALIZADA
     
-    // ===== NOVO SISTEMA DE PONTOS DE AÇÃO (PA) =====
     const PONTOS_ACAO_POR_DIA = 4;
     let pontosAcaoAtuais = PONTOS_ACAO_POR_DIA;
     
     let jogoAtivo = true;
-    let acaoEmProgresso = false; // Evita cliques duplos
+    let acaoEmProgresso = false;
 
-    // --- Funções de Ação (Que gastam PA e Energia) ---
-    
+    // --- Função Mestra de Ação ---
     async function realizarAcao(custoPA, custoEnergia, fnSucesso, fnFalhaEnergia) {
         if (!jogoAtivo || acaoEmProgresso) return;
 
-        // Verifica Energia
         if (energia < custoEnergia) {
             fnFalhaEnergia();
             return;
         }
 
-        acaoEmProgresso = true; // Trava o jogo
+        acaoEmProgresso = true;
         energia -= custoEnergia;
+        pontosAcaoAtuais -= custoPA;
         
+        atualizarStatus(); // BUGFIX 1: Atualiza o contador de PA imediatamente
+
         // Simula o tempo da ação
         await new Promise(r => setTimeout(r, 500)); 
         
         fnSucesso(); // Executa o sucesso (ganhar comida, madeira, etc.)
 
-        pontosAcaoAtuais -= custoPA;
-
         // Verifica se o dia deve passar
         if (pontosAcaoAtuais <= 0) {
-            let dividaAcao = Math.abs(pontosAcaoAtuais); // A "negativada"
+            let dividaAcao = Math.abs(pontosAcaoAtuais);
             
-            // Passa a noite (eventos, metabolismo)
-            await proximoTurno(); 
+            await proximoTurno(); // Passa a noite
             
-            // Se ainda estiver vivo, começa o novo dia
-            if (jogoAtivo) {
+            if (jogoAtivo) { // Se sobreviveu à noite
                 dia++;
-                pontosAcaoAtuais = PONTOS_ACAO_POR_DIA - dividaAcao;
+                pontosAcaoAtuais = PONTOS_ACAO_POR_DIA - dividaAcao; // Define PA para o novo dia
+                
+                // BUGFIX 2: Adiciona o log da "negativada"
                 if (dividaAcao > 0) {
-                    adicionarLog(`Você gastou energia extra e começou o dia com ${pontosAcaoAtuais} PA.`, "log-evento");
+                    adicionarLog(`Você começou o dia "negativado" com ${pontosAcaoAtuais} PA.`, "log-evento");
                 }
             }
         }
         
-        acaoEmProgresso = false; // Libera o jogo
+        acaoEmProgresso = false;
         
         // Verifica se o jogo acabou (vitória ou morte)
         if (jogoAtivo) {
              if (dia > diasObjetivo) {
                 gameWin();
             } else {
-                atualizarStatus();
+                atualizarStatus(); // Atualiza o status para o novo dia/novo PA
             }
         }
     }
 
     // --- Ações Específicas ---
 
-    // CAÇAR: Custo 3 PA, 20 Energia
     btnCacar.addEventListener('click', () => {
         realizarAcao(3, 20, 
             () => { // Sucesso
@@ -111,13 +108,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     adicionarLog("DROGA! Você não encontrou nada.", "log-ruim");
                 }
             },
-            () => { // Falha (sem energia)
+            () => { // Falha
                 adicionarLog("Você está cansado demais para caçar.", "log-evento");
             }
         );
     });
 
-    // COLETAR MADEIRA: Custo 2 PA, 15 Energia
     btnMadeira.addEventListener('click', () => {
         realizarAcao(2, 15,
             () => { // Sucesso
@@ -131,7 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     });
 
-    // DESCANSAR: Custo 1 PA, 5 Energia
     btnDescansar.addEventListener('click', () => {
         realizarAcao(1, 5,
             () => { // Sucesso
@@ -146,12 +141,11 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     });
     
-    // MELHORAR BASE: Custo 1 PA, 0 Energia
     btnBase.addEventListener('click', () => {
         const custoBaseMadeira = (nivelBase + 1) * 10;
         if (madeira < custoBaseMadeira) {
             adicionarLog(`Você precisa de ${custoBaseMadeira} de madeira para melhorar a base.`, "log-ruim");
-            return; // Falha (sem madeira), não gasta PA
+            return;
         }
         
         realizarAcao(1, 0,
@@ -160,11 +154,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 nivelBase++;
                 adicionarLog(`VOCÊ MELHOROU SUA BASE! (Nível ${nivelBase})`, "log-bom");
             },
-            () => {} // Nunca falha por energia
+            () => {}
         );
     });
 
-    // COMER: Custo 0 PA, 0 Energia
     btnComer.addEventListener('click', () => {
         if (!jogoAtivo || acaoEmProgresso) return;
         if (comida > 0) {
@@ -185,25 +178,21 @@ document.addEventListener('DOMContentLoaded', () => {
     async function proximoTurno() {
         if (!jogoAtivo) return;
 
-        // 1. Metabolismo (Passagem do tempo)
         let gastoMetabolismo = 15 - (nivelBase * 2);
         if (gastoMetabolismo < 5) gastoMetabolismo = 5;
         energia -= gastoMetabolismo;
         if (nivelBase > 0) {
-            adicionarLog(`Seu abrigo (Nv.${nivelBase}) te protegeu do frio. Você economizou energia.`, "log-bom");
+            adicionarLog(`Seu abrigo (Nv.${nivelBase}) te protegeu do frio.`, "log-bom");
         }
 
-        // 2. Verificar Fome/Exaustão
         if (energia <= 0) {
             energia = 0;
             adicionarLog("Você está exausto e faminto! Sua vida está diminuindo.", "log-ruim");
             vida -= 10;
         }
 
-        // 3. Eventos Aleatórios (agora pausam o jogo)
         await eventoAleatorio();
 
-        // 4. Verificar Morte
         if (vida <= 0) {
             vida = 0;
             gameOver();
@@ -213,7 +202,6 @@ document.addEventListener('DOMContentLoaded', () => {
     async function eventoAleatorio() {
         const chance = Math.random();
         
-        // Proteção da Base (Nv. 2+)
         if (nivelBase >= 2) {
             let chanceProtecao = (nivelBase - 1) * 0.25;
             if (Math.random() < chanceProtecao) {
@@ -222,10 +210,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Eventos
         if (dia > 5 && chance < 0.15) { // Ataque de Animal
             adicionarLog("[EVENTO] Um animal selvagem te ataca! SE DEFENDA!", "log-evento");
-            const vitoria = await iniciarMinigameAtaque(); // Espera o minigame
+            const vitoria = await iniciarMinigameAtaque();
             
             if (vitoria) {
                 adicionarLog("Ufa! Você conseguiu espantar o animal!", "log-bom");
@@ -236,7 +223,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 adicionarLog(`Você perdeu ${dano} de vida.`, "log-ruim");
             }
         
-        } else if (chance < 0.30) { // Tempestade (cansaço)
+        } else if (chance < 0.30) { // Tempestade
             await mostrarAlerta("Tempestade!", "Uma tempestade terrível! Você acorda cansado.");
             energia -= 20;
             adicionarLog("Você perdeu 20 de energia extra.", "log-ruim");
@@ -251,13 +238,27 @@ document.addEventListener('DOMContentLoaded', () => {
             nivelBase = 1;
             adicionarLog("Sua base foi quase destruída! (Nível 1)", "log-ruim");
         
-        } else if (chance > 0.9) { // Sorte
-            await mostrarAlerta("Sorte!", "Você encontrou um baú naufragado!");
-            comida += 3;
-            madeira += 5;
+        // ===== MELHORIA: BAÚ ALEATÓRIO =====
+        } else if (chance > 0.9) { 
+            let itensEncontrados = Math.floor(Math.random() * 5) + 1; // 1 a 5 itens
+            let comidaEncontrada = 0;
+            let madeiraEncontrada = 0;
+            
+            for (let i = 0; i < itensEncontrados; i++) {
+                if (Math.random() < 0.6) { // 60% chance de ser comida
+                    comidaEncontrada++;
+                } else { // 40% chance de ser madeira
+                    madeiraEncontrada++;
+                }
+            }
+            
+            comida += comidaEncontrada;
+            madeira += madeiraEncontrada;
+            
+            let msg = `Você encontrou um baú naufragado! Dentro havia: ${comidaEncontrada} comida(s) e ${madeiraEncontrada} madeira(s).`;
+            await mostrarAlerta("Sorte!", msg);
         }
 
-        // Limpeza de status
         if (vida > 100) vida = 100;
         if (energia > 100) energia = 100;
         if (energia < 0) energia = 0;
@@ -265,8 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // --- ===== LÓGICA DO MINIGAME DE ATAQUE ===== ---
-    // (Igual ao anterior, funciona com 'Promise' para pausar o jogo)
+    // --- Lógica do Minigame (Sem alterações) ---
     let timerId = null;
     let moveId = null;
 
@@ -293,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 clearInterval(moveId);
                 minigameOverlay.style.display = 'none';
                 minigameAlvo.removeEventListener('click', cliqueVitoria);
-                resolve(true); // Venceu
+                resolve(true);
             }
             minigameAlvo.addEventListener('click', cliqueVitoria);
 
@@ -306,14 +306,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     clearInterval(moveId);
                     minigameOverlay.style.display = 'none';
                     minigameAlvo.removeEventListener('click', cliqueVitoria);
-                    resolve(false); // Perdeu
+                    resolve(false);
                 }
             }, 100);
         });
     }
 
-    // --- ===== NOVO: POP-UP DE ALERTA (PAUSA O JOGO) ===== ---
-    
+    // --- Lógica do Pop-up de Alerta (Sem alterações) ---
     function mostrarAlerta(titulo, mensagem) {
         return new Promise((resolve) => {
             alertaTitulo.textContent = titulo;
@@ -323,7 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
             function fecharAlerta() {
                 alertaOverlay.style.display = 'none';
                 alertaOk.removeEventListener('click', fecharAlerta);
-                resolve(); // Continua o jogo
+                resolve();
             }
             
             alertaOk.addEventListener('click', fecharAlerta);
@@ -342,38 +341,36 @@ document.addEventListener('DOMContentLoaded', () => {
     function atualizarStatus() {
         if (!jogoAtivo) return;
         
-        // Barras e Valores
         vidaBar.value = vida;
         energiaBar.value = energia;
         vidaValor.textContent = `${vida}/100`;
         energiaValor.textContent = `${energia}/100`;
         comidaStat.textContent = comida;
         madeiraStat.textContent = madeira;
-        pontosAcaoAtuais.textContent = pontosAcaoAtuais;
+        
+        // BUGFIX 1: Esta linha corrige o contador de PA
+        pontosAcaoStat.textContent = pontosAcaoAtuais; 
 
-        // Lógica da Base
         let nomeBase = "Nenhuma (Nv. 0)";
         if (nivelBase === 1) nomeBase = "Cabana Fraca (Nv. 1)";
         else if (nivelBase === 2) nomeBase = "Abrigo (Nv. 2)";
-        else if (nivelBase === 3) nomeBse = "Reforçada (Nv. 3)";
+        else if (nivelBase === 3) nomeBase = "Reforçada (Nv. 3)";
         else if (nivelBase >= 4) nomeBase = `Fortaleza (Nv. ${nivelBase})`;
         baseStat.textContent = nomeBase;
 
-        // Atualiza custo do botão da base
         btnBase.textContent = `Melhorar Base (Custa 1 PA, ${(nivelBase + 1) * 10} Madeira)`;
-
-        // Atualiza status do dia
         diaStatus.textContent = `Dia ${dia} de ${diasObjetivo}`;
         
-        // Desativa botões de energia se não houver suficiente
-        btnCacar.disabled = energia < 20;
-        btnMadeira.disabled = energia < 15;
-        btnDescansar.disabled = energia < 5;
+        btnCacar.disabled = (energia < 20 || acaoEmProgresso);
+        btnMadeira.disabled = (energia < 15 || acaoEmProgresso);
+        btnDescansar.disabled = (energia < 5 || acaoEmProgresso);
+        btnBase.disabled = (madeira < (nivelBase + 1) * 10 || acaoEmProgresso);
+        btnComer.disabled = (comida <= 0 || acaoEmProgresso);
     }
 
     function desativarTodosBotoes() {
         jogoAtivo = false;
-        acaoEmProgresso = true; // Trava o jogo
+        acaoEmProgresso = true;
         btnCacar.disabled = true;
         btnMadeira.disabled = true;
         btnDescansar.disabled = true;
@@ -385,15 +382,15 @@ document.addEventListener('DOMContentLoaded', () => {
         desativarTodosBotoes();
         adicionarLog("VOCÊ NÃO SOBREVIVEU...", "log-morte");
         diaStatus.textContent = `Você morreu no Dia ${dia}.`;
-        atualizarStatus();
+        // Não precisa chamar atualizarStatus() pois desativarTodosBotoes já trava tudo.
     }
 
     function gameWin() {
         desativarTodosBotoes();
-        // Mostra a tela de vitória
+        // MELHORIA: Mostra a tela de vitória
         vitoriaOverlay.style.display = 'flex';
     }
 
     // --- Inicialização do Jogo ---
-    atualizarStatus();
+    atualizarStatus(); // Define o status inicial (incluindo PA = 4)
 });
