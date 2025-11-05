@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const energiaValor = document.getElementById('energia-valor');
     const diaStatus = document.getElementById('dia-status');
     const logArea = document.getElementById('log-area');
-    const pontosAcaoStat = document.getElementById('pontos-acao-stat');
+    const acdStat = document.getElementById('acd-stat');
 
     const btnCacar = document.getElementById('btn-cacar');
     const btnMadeira = document.getElementById('btn-madeira');
@@ -44,16 +44,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let pontosAcaoAtuais = PONTOS_ACAO_POR_DIA;
     
     let cacasConsecutivas = 0;
+    let coletasConsecutivas = 0;
     
     let jogoAtivo = true;
     let acaoEmProgresso = false;
 
     // --- Função Mestra de Ação ---
-    async function realizarAcao(custoPA, fnSucesso) {
+    async function realizarAcao(custoAcd, fnSucesso) {
         if (!jogoAtivo || acaoEmProgresso) return;
 
         acaoEmProgresso = true;
-        pontosAcaoAtuais -= custoPA;
+        pontosAcaoAtuais -= custoAcd;
         atualizarStatus(); 
 
         await new Promise(r => setTimeout(r, 500)); 
@@ -69,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dia++;
                 pontosAcaoAtuais = PONTOS_ACAO_POR_DIA - dividaAcao;
                 if (dividaAcao > 0) {
-                    adicionarLog(`Você começou o dia "negativado" com ${pontosAcaoAtuais} PA.`, "log-evento");
+                    adicionarLog(`Você começou o dia "negativado" com ${pontosAcaoAtuais} AçD.`, "log-evento");
                 }
             }
         }
@@ -86,11 +87,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Lógica de Custo (Energia ou Vida) ---
-    function pagarCustoEnergia(custoEnergia, custoVida) {
+    function pagarCustoEnergia(custoEnergia) {
         if (energia >= custoEnergia) {
             energia -= custoEnergia;
             return true;
         } else {
+            const custoVida = (custoEnergia / 5) * 10;
+            
             adicionarLog(`Sem energia! Você força o limite, custando ${custoVida} de Vida.`, "log-ruim");
             energia = 0;
             vida -= custoVida;
@@ -103,15 +106,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Ações Específicas (Atualizadas) ---
+    // --- Ações Específicas ---
 
     // CAÇAR
     btnCacar.addEventListener('click', () => {
         if (cacasConsecutivas >= 2) {
-            adicionarLog("Você caçou demais e assustou os animais. Faça outra atividade.", "log-ruim");
+            adicionarLog("Você caçou demais. Faça outra atividade.", "log-ruim");
             return;
         }
-        if (!pagarCustoEnergia(20, 10)) return;
+        if (!pagarCustoEnergia(30)) return;
         
         realizarAcao(3, 
             () => { // fnSucesso
@@ -125,51 +128,46 @@ document.addEventListener('DOMContentLoaded', () => {
                 carne += carnesGanhas;
                 adicionarLog(`BOA! Você conseguiu ${carnesGanhas} carne(s).`, "log-bom");
                 cacasConsecutivas++;
+                coletasConsecutivas = 0;
             }
         );
     });
 
     // COLETAR MADEIRA
     btnMadeira.addEventListener('click', () => {
-        if (!pagarCustoEnergia(15, 10)) return;
+        if (coletasConsecutivas >= 2) {
+            adicionarLog("Você coletou demais. Faça outra atividade.", "log-ruim");
+            return;
+        }
+        if (!pagarCustoEnergia(35)) return;
 
         realizarAcao(2,
             () => { // fnSucesso
                 const ganhoMadeira = Math.floor(Math.random() * 3) + 1;
                 madeira += ganhoMadeira;
                 adicionarLog(`Você coletou ${ganhoMadeira} de madeira.`, "log-bom");
+                coletasConsecutivas++;
                 cacasConsecutivas = 0;
             }
         );
     });
 
-    // ==========================================================
-    // ===== MUDANÇA: DESCANSAR (Custo 10 Energia) =====
-    // ==========================================================
+    // DESCANSAR
     btnDescansar.addEventListener('click', () => {
-        const custoEnergia = 10;
-        if (energia < custoEnergia) {
-            adicionarLog(`Você precisa de pelo menos ${custoEnergia} de energia para descansar.`, "log-evento");
-            return; // Bloqueia se não tiver energia
-        }
-
-        // Paga o custo (sem risco de vida)
-        energia -= custoEnergia;
+        if (!pagarCustoEnergia(50)) return;
 
         realizarAcao(1,
             () => { // fnSucesso
-                let vidaRecuperada = 20; // MUDANÇA: Cura fixa de 20
+                let vidaRecuperada = 20;
                 vida += vidaRecuperada;
                 if (vida > 100) vida = 100;
                 adicionarLog(`Você descansou e recuperou ${vidaRecuperada} de vida.`, "log-bom");
                 cacasConsecutivas = 0;
+                coletasConsecutivas = 0;
             }
         );
     });
-    // ==========================================================
-    // ===== FIM DA MUDANÇA =====
-    // ==========================================================
-
+    
     // MELHORAR BASE
     btnBase.addEventListener('click', async () => {
         if (!jogoAtivo || acaoEmProgresso) return;
@@ -179,17 +177,19 @@ document.addEventListener('DOMContentLoaded', () => {
             adicionarLog(`Você precisa de ${custoBaseMadeira} de madeira para melhorar a base.`, "log-ruim");
             return;
         }
-        
         if (pontosAcaoAtuais < 4) {
-            adicionarLog(`Você precisa de um dia inteiro (4 PA) para melhorar a base.`, "log-ruim");
+            adicionarLog(`Você precisa de um dia inteiro (4 AçD) para melhorar a base.`, "log-ruim");
             return;
         }
+
+        if (!pagarCustoEnergia(50)) return;
 
         acaoEmProgresso = true;
         madeira -= custoBaseMadeira;
         nivelBase++;
         pontosAcaoAtuais = 0;
         cacasConsecutivas = 0;
+        coletasConsecutivas = 0;
         adicionarLog(`VOCÊ PASSA O DIA MELHORANDO SUA BASE! (Nível ${nivelBase})`, "log-bom");
         
         atualizarStatus(); 
@@ -284,12 +284,12 @@ document.addEventListener('DOMContentLoaded', () => {
             energia -= 20;
             adicionarLog("Você perdeu 20 de energia extra.", "log-ruim");
         
-        } else if (dia > 10 && chance >= 0.30 && chance < 0.50 && nivelBase > 0) { // Dano na base (20%)
+        } else if (dia > 10 && chance >= 0.30 && chance < 0.35 && nivelBase > 0) { // MUDANÇA: Dano na base (5%)
             await mostrarAlerta("Ventos Fortes!", "Ventos fortes danificaram seu abrigo!");
             nivelBase--;
             adicionarLog(`Sua base foi rebaixada para o Nível ${nivelBase}.`, "log-ruim");
         
-        } else if (dia > 30 && chance >= 0.50 && chance < 0.55 && nivelBase > 2) { // Desastre na base (5%)
+        } else if (dia > 30 && chance >= 0.35 && chance < 0.40 && nivelBase > 2) { // Desastre na base (5%)
             await mostrarAlerta("DESASTRE!", "Uma árvore caiu sobre seu abrigo!");
             nivelBase = 1;
             adicionarLog("Sua base foi quase destruída! (Nível 1)", "log-ruim");
@@ -398,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
         energiaValor.textContent = `${energia}/100`;
         carneStat.textContent = carne;
         madeiraStat.textContent = madeira;
-        pontosAcaoStat.textContent = pontosAcaoAtuais; 
+        acdStat.textContent = pontosAcaoAtuais; 
 
         let nomeBase = "Nenhuma (Nv. 0)";
         if (nivelBase === 1) nomeBase = "Cabana Fraca (Nv. 1)";
@@ -407,15 +407,15 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (nivelBase >= 4) nomeBase = `Fortaleza (Nv. ${nivelBase})`;
         baseStat.textContent = nomeBase;
 
-        btnBase.textContent = `Melhorar Base (Custa 4 PA, ${(nivelBase + 1) * 10} Madeira)`;
+        // MUDANÇA: Texto do botão da base corrigido
+        btnBase.textContent = `Melhorar Base (Custa 4 AçD, 50 Energia)`;
         diaStatus.textContent = `Dia ${dia} de ${diasObjetivo}`;
         
-        // MUDANÇA: Lógica de desativar botões
+        // Lógica de desativar botões
         btnCacar.disabled = (acaoEmProgresso || cacasConsecutivas >= 2);
-        btnMadeira.disabled = acaoEmProgresso;
-        // MUDANÇA: Agora checa se tem 10 de energia
-        btnDescansar.disabled = (energia < 10 || acaoEmProgresso);
-        btnBase.disabled = (madeira < (nivelBase + 1) * 10 || pontosAcaoAtuais < 4 || acaoEmProgresso);
+        btnMadeira.disabled = (acaoEmProgresso || coletasConsecutivas >= 2);
+        btnDescansar.disabled = (energia < 50 || acaoEmProgresso);
+        btnBase.disabled = (madeira < (nivelBase + 1) * 10 || pontosAcaoAtuais < 4 || acaoEmProgresso || energia < 50);
         btnComer.disabled = (carne <= 0 || acaoEmProgresso);
     }
 
