@@ -1,6 +1,6 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #333; /* Fundo mais escuro */
+    background-color: #333;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -55,7 +55,7 @@ progress[id="energia-bar"]::-webkit-progress-value { background-color: #5bc0de; 
 }
 #inventario span { font-size: 1em; margin: 5px; }
 
-/* ===== NOVO: PONTOS DE AÇÃO ===== */
+/* Pontos de Ação */
 #acao-container {
     text-align: center;
     margin-bottom: 20px;
@@ -75,7 +75,7 @@ progress[id="energia-bar"]::-webkit-progress-value { background-color: #5bc0de; 
 }
 #botoes-acao button {
     padding: 12px 15px;
-    font-size: 0.9em; /* Menor para caber */
+    font-size: 0.9em;
     font-weight: bold;
     cursor: pointer;
     border: none;
@@ -84,7 +84,7 @@ progress[id="energia-bar"]::-webkit-progress-value { background-color: #5bc0de; 
     color: white;
     transition: background-color 0.2s;
     margin: 5px;
-    flex-basis: 45%; /* Botões ocupam quase metade */
+    flex-basis: 45%;
 }
 #botoes-acao button:hover {
     background-color: #4a9d4a;
@@ -127,9 +127,9 @@ progress[id="energia-bar"]::-webkit-progress-value { background-color: #5bc0de; 
 .log-morte { background-color: #a94442; color: white; font-weight: bold; text-align: center; font-size: 1.2em;}
 .log-vitoria { background-color: #3c763d; color: white; font-weight: bold; text-align: center; font-size: 1.2em;}
 
-/* ===== ESTILOS DOS POP-UPS (OVERLAYS) ===== */
+/* Pop-ups (Overlays) */
 #minigame-overlay, #alerta-overlay, #vitoria-overlay {
-    display: none; /* Começam invisíveis */
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
@@ -152,7 +152,7 @@ progress[id="energia-bar"]::-webkit-progress-value { background-color: #5bc0de; 
     max-width: 500px;
 }
 
-/* Estilos específicos do Minigame */
+/* Minigame */
 #minigame-arena {
     width: 400px;
     max-width: 100%;
@@ -178,7 +178,7 @@ progress[id="energia-bar"]::-webkit-progress-value { background-color: #5bc0de; 
     margin-top: 10px;
 }
 
-/* Estilos específicos do Alerta */
+/* Alerta */
 #alerta-container h2 { color: #8a6d3b; }
 #alerta-container p { font-size: 1.1em; }
 #alerta-ok {
@@ -193,7 +193,7 @@ progress[id="energia-bar"]::-webkit-progress-value { background-color: #5bc0de; 
     margin-top: 15px;
 }
 
-/* Estilos específicos da Vitória */
+/* Vitória */
 #vitoria-container {
     background-color: #3c763d;
     color: white;
