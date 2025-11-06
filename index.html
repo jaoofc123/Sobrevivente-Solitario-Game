@@ -7,9 +7,22 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+    <div id="menu-container">
+        <h1>Sobrevivente</h1>
+        <p>Você acordou em uma ilha deserta. Por quanto tempo você consegue sobreviver?</p>
+        <h2>Escolha seu Desafio:</h2>
+        <div id="botoes-modo">
+            <button id="btn-treinamento" class="btn-modo">Treinamento (10 Dias)</button>
+            <button id="btn-facil" class="btn-modo">Fácil (50 Dias)</button>
+            <button id="btn-medio" class="btn-modo">Médio (150 Dias)</button>
+            <button id="btn-dificil" class="btn-modo">Difícil (365 Dias)</button>
+        </div>
+    </div>
+
     <div id="game-container">
-        <h1>Sobrevivente: 365 Dias</h1>
-        <h2 id="dia-status">Dia 1 de 365</h2>
+        <h1>Sobrevivente: <span id="modo-jogo-titulo"></span></h1>
+        <h2 id="dia-status">Dia 1 de X</h2>
 
         <div id="status-bars">
             <div class="stat-bar">
@@ -46,8 +59,7 @@
         <div id="log-container">
             <h3>Diário de Bordo</h3>
             <div id="log-area">
-                <p class="log-inicio">Você acordou em uma ilha deserta. O objetivo agora é sobreviver 365 dias.</p>
-            </div>
+                </div>
         </div>
     </div>
 
@@ -72,8 +84,9 @@
 
     <div id="vitoria-overlay">
         <div id="vitoria-container">
-            <h2>VOCÊ SOBREVIVEU!</h2>
-            <p>Após 365 longos e exaustivos dias, você acorda com um som diferente no horizonte.</p>
+            <h2 id="vitoria-titulo">VOCÊ SOBREVIVEU!</h2>
+            <p id="vitoria-texto-dias"></p>
+            <p>Você acorda com um som diferente no horizonte.</p>
             <p>Um navio de pesquisa, que estava mapeando ilhas desconhecidas, vê a fumaça da sua fogueira.</p>
             <p>Eles descem botes... Eles estão gritando por você.</p>
             <p>Você não acredita. Você conseguiu. Você está indo para casa.</p>
