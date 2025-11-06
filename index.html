@@ -14,22 +14,19 @@
             <h2>Log de Atualização</h2>
             
             <div class="update-content">
-                <p>Boas-vindas, sobrevivente! O jogo foi atualizado com novas mecânicas e balanceamento.</p>
+                <p>Boas-vindas à V1.1! O jogo foi rebalanceado para um maior desafio estratégico.</p>
                 <ul>
-                    <li><strong>Novo Objetivo:</strong> O desafio máximo agora é <strong>365 Dias</strong>!</li>
-                    <li><strong>Novos Modos:</strong> Adicionado Menu com modos Treinamento, Fácil, Médio e Difícil.</li>
-                    <li><strong>Ações no Dia (AçD):</strong> O dia agora é dividido em 4 "Ações no Dia" (AçD).</li>
-                    <li><strong>Dívida de Ação:</strong> Se você gastar mais AçD do que tem, você começa o dia seguinte "negativado"!</li>
-                    <li><strong>Novos Custos:</strong> Caçar, Coletar e Descansar agora custam Energia.</li>
-                    <li><strong>Penalidade de Vida:</strong> Se não tiver Energia, você pode forçar a ação, mas **custará Vida** (10 de Vida para cada 5 de Energia que faltar).</li>
-                    <li><strong>Cooldowns:</strong> Você não pode Caçar ou Coletar Madeira mais de 2 vezes seguidas. Faça outra ação para "resetar" o contador.</li>
-                    <li><strong>Minigame:</strong> Eventos de ataque agora são minigames de reflexo!</li>
-                    <li><strong>Balanceamento:</strong> Custos de energia, chances de caça e dano da base foram ajustados.</li>
+                    <li><strong>Novo Item: Medkit!</strong> Cure 50 de Vida instantaneamente. (20% chance em Baús, 10% chance ao Caçar/Coletar).</li>
+                    <li><strong>Novos Custos de AçD:</strong> Caçar agora custa <strong>2 AçD</strong> e Coletar Madeira custa <strong>3 AçD</strong>.</li>
+                    <li><strong>Novos Custos de Energia:</strong> Caçar (30), Coletar (35), Descansar (50) e Melhorar Base (50).</li>
+                    <li><strong>Nova Penalidade de Vida:</strong> Ações sem energia custarão <strong>10 de Vida</strong> para cada 5 de Energia que faltar. (Cuidado: Descansar/Melhorar Base podem custar 100 de Vida!).</li>
+                    <li><strong>Cooldown de Ações:</strong> Você não pode Caçar ou Coletar Madeira mais de 2 vezes seguidas.</li>
+                    <li><strong>Balanceamento:</strong> Chance de quebra da base reduzida para 5%. Custo para reconstruir a base reduzido em 25%.</li>
                 </ul>
             </div>
             
             <button id="btn-entendi" class="btn-verde">Entendi</button>
-            <span class="update-date">Versão 1.0 - 06.10.25</span>
+            <span class="update-date">Versão 1.1 - 06.11.25</span>
         </div>
     </div>
 
@@ -66,6 +63,7 @@
             <span><strong>Carne: </strong><span id="carne-stat">3</span></span>
             <span><strong>Madeira: </strong><span id="madeira-stat">0</span></span>
             <span><strong>Base: </strong><span id="base-stat">Nenhuma (Nv. 0)</span></span>
+            <span><strong>Medkit: </strong><span id="medkit-stat">0</span></span>
         </div>
         
         <div id="acao-container">
@@ -74,11 +72,12 @@
         </div>
 
         <div id="botoes-acao">
-            <button id="btn-cacar">Caçar (Custa 3 AçD, 30 Energia)</button>
-            <button id="btn-madeira">Coletar Madeira (Custa 2 AçD, 35 Energia)</button>
+            <button id="btn-cacar">Caçar (Custa 2 AçD, 30 Energia)</button>
+            <button id="btn-madeira">Coletar Madeira (Custa 3 AçD, 35 Energia)</button>
             <button id="btn-descansar">Descansar (Custa 1 AçD, 50 Energia)</button>
             <button id="btn-base" class="btn-upgrade">Melhorar Base (Custa 4 AçD, 50 Energia)</button>
             <button id="btn-comer" class="btn-free">Comer Carne (Ação Grátis)</button>
+            <button id="btn-usar-medkit" class="btn-free">Usar Medkit (Cura 50 Vida)</button>
         </div>
 
         <div id="log-container">
