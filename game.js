@@ -1,6 +1,16 @@
+// O listener DOMContentLoaded agora configura o MENU
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- Referências aos Elementos HTML ---
+    // --- Referências aos Elementos do MENU ---
+    const menuContainer = document.getElementById('menu-container');
+    const gameContainer = document.getElementById('game-container');
+    
+    const btnTreinamento = document.getElementById('btn-treinamento');
+    const btnFacil = document.getElementById('btn-facil');
+    const btnMedio = document.getElementById('btn-medio');
+    const btnDificil = document.getElementById('btn-dificil');
+
+    // --- Referências aos Elementos do JOGO ---
     const carneStat = document.getElementById('carne-stat');
     const madeiraStat = document.getElementById('madeira-stat');
     const baseStat = document.getElementById('base-stat');
@@ -11,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const diaStatus = document.getElementById('dia-status');
     const logArea = document.getElementById('log-area');
     const acdStat = document.getElementById('acd-stat');
+    const modoJogoTitulo = document.getElementById('modo-jogo-titulo'); // Novo
 
     const btnCacar = document.getElementById('btn-cacar');
     const btnMadeira = document.getElementById('btn-madeira');
@@ -30,24 +41,52 @@ document.addEventListener('DOMContentLoaded', () => {
     const alertaOk = document.getElementById('alerta-ok');
 
     const vitoriaOverlay = document.getElementById('vitoria-overlay');
+    const vitoriaTitulo = document.getElementById('vitoria-titulo'); // Novo
+    const vitoriaTextoDias = document.getElementById('vitoria-texto-dias'); // Novo
 
-    // --- Variáveis de Estado do Jogo ---
-    let vida = 100;
-    let energia = 100;
-    let carne = 3;
-    let madeira = 0;
-    let nivelBase = 0;
-    let dia = 1;
-    const diasObjetivo = 365;
+    // --- Variáveis de Estado do Jogo (Globais, mas definidas no início) ---
+    let vida, energia, carne, madeira, nivelBase, dia, diasObjetivo;
+    let pontosAcaoAtuais, cacasConsecutivas, coletasConsecutivas;
+    let jogoAtivo, acaoEmProgresso;
     
     const PONTOS_ACAO_POR_DIA = 4;
-    let pontosAcaoAtuais = PONTOS_ACAO_POR_DIA;
-    
-    let cacasConsecutivas = 0;
-    let coletasConsecutivas = 0;
-    
-    let jogoAtivo = true;
-    let acaoEmProgresso = false;
+
+    // ==========================================================
+    // ===== NOVO: FUNÇÃO DE INÍCIO DE JOGO =====
+    // ==========================================================
+    function iniciarJogo(objetivo, modoTexto) {
+        // 1. Esconde o menu e mostra o jogo
+        menuContainer.style.display = 'none';
+        gameContainer.style.display = 'block';
+
+        // 2. Define as variáveis de estado iniciais
+        vida = 100;
+        energia = 100;
+        carne = 3;
+        madeira = 0;
+        nivelBase = 0;
+        dia = 1;
+        diasObjetivo = objetivo;
+        pontosAcaoAtuais = PONTOS_ACAO_POR_DIA;
+        cacasConsecutivas = 0;
+        coletasConsecutivas = 0;
+        jogoAtivo = true;
+        acaoEmProgresso = false;
+
+        // 3. Configura a UI do jogo
+        modoJogoTitulo.textContent = modoTexto;
+        adicionarLog(`Começa o modo ${modoTexto}. Seu objetivo: sobreviver ${diasObjetivo} dias.`, "log-evento");
+
+        // 4. Conecta os botões de ação (só precisa fazer isso uma vez)
+        // (Eles já estão conectados lá embaixo, no fim do script)
+
+        // 5. Atualiza a tela pela primeira vez
+        atualizarStatus();
+    }
+    // ==========================================================
+    // ===== FIM DA FUNÇÃO DE INÍCIO =====
+    // ==========================================================
+
 
     // --- Função Mestra de Ação ---
     async function realizarAcao(custoAcd, fnSucesso) {
@@ -107,9 +146,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Ações Específicas ---
-
-    // CAÇAR
-    btnCacar.addEventListener('click', () => {
+    
+    function acaoCacar() {
         if (cacasConsecutivas >= 2) {
             adicionarLog("Você caçou demais. Faça outra atividade.", "log-ruim");
             return;
@@ -131,10 +169,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 coletasConsecutivas = 0;
             }
         );
-    });
+    }
 
-    // COLETAR MADEIRA
-    btnMadeira.addEventListener('click', () => {
+    function acaoColetarMadeira() {
         if (coletasConsecutivas >= 2) {
             adicionarLog("Você coletou demais. Faça outra atividade.", "log-ruim");
             return;
@@ -150,10 +187,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 cacasConsecutivas = 0;
             }
         );
-    });
+    }
 
-    // DESCANSAR
-    btnDescansar.addEventListener('click', () => {
+    function acaoDescansar() {
         if (!pagarCustoEnergia(50)) return;
 
         realizarAcao(1,
@@ -166,10 +202,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 coletasConsecutivas = 0;
             }
         );
-    });
+    }
     
-    // MELHORAR BASE
-    btnBase.addEventListener('click', async () => {
+    async function acaoMelhorarBase() {
         if (!jogoAtivo || acaoEmProgresso) return;
         
         const custoBaseMadeira = (nivelBase + 1) * 10;
@@ -181,7 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
             adicionarLog(`Você precisa de um dia inteiro (4 AçD) para melhorar a base.`, "log-ruim");
             return;
         }
-
         if (!pagarCustoEnergia(50)) return;
 
         acaoEmProgresso = true;
@@ -211,10 +245,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 atualizarStatus();
             }
         }
-    });
+    }
 
-    // COMER
-    btnComer.addEventListener('click', () => {
+    function acaoComer() {
         if (!jogoAtivo || acaoEmProgresso) return;
         if (carne > 0) {
             carne--;
@@ -226,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             adicionarLog("Você não tem carne no inventário!", "log-ruim");
         }
-    });
+    }
 
 
     // --- Lógica de Turnos e Eventos ---
@@ -284,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
             energia -= 20;
             adicionarLog("Você perdeu 20 de energia extra.", "log-ruim");
         
-        } else if (dia > 10 && chance >= 0.30 && chance < 0.35 && nivelBase > 0) { // MUDANÇA: Dano na base (5%)
+        } else if (dia > 10 && chance >= 0.30 && chance < 0.35 && nivelBase > 0) { // Dano na base (5%)
             await mostrarAlerta("Ventos Fortes!", "Ventos fortes danificaram seu abrigo!");
             nivelBase--;
             adicionarLog(`Sua base foi rebaixada para o Nível ${nivelBase}.`, "log-ruim");
@@ -437,9 +470,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function gameWin() {
         desativarTodosBotoes();
+        vitoriaTitulo.textContent = `VOCÊ SOBREVIVEU AOS ${diasObjetivo} DIAS!`;
+        vitoriaTextoDias.textContent = `Após ${diasObjetivo} longos e exaustivos dias, você acorda com um som diferente no horizonte.`;
         vitoriaOverlay.style.display = 'flex';
     }
 
-    // --- Inicialização do Jogo ---
-    atualizarStatus();
+    // --- CONECTORES DE BOTÕES (Menu e Jogo) ---
+
+    // Conectores do Menu
+    btnTreinamento.addEventListener('click', () => iniciarJogo(10, "Treinamento"));
+    btnFacil.addEventListener('click', () => iniciarJogo(50, "Fácil"));
+    btnMedio.addEventListener('click', () => iniciarJogo(150, "Médio"));
+    btnDificil.addEventListener('click', () => iniciarJogo(365, "Difícil"));
+    
+    // Conectores das Ações do Jogo
+    btnCacar.addEventListener('click', acaoCacar);
+    btnMadeira.addEventListener('click', acaoColetarMadeira);
+    btnDescansar.addEventListener('click', acaoDescansar);
+    btnBase.addEventListener('click', acaoMelhorarBase);
+    btnComer.addEventListener('click', acaoComer);
 });
