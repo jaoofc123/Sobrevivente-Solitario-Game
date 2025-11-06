@@ -10,16 +10,16 @@ body {
     box-sizing: border-box;
 }
 
-/* ===== NOVO: ESTILOS DO LOG DE ATUALIZAÇÃO ===== */
+/* ===== LOG DE ATUALIZAÇÃO ===== */
 #update-log-overlay {
-    display: flex; /* Começa visível */
+    display: flex;
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.7);
-    z-index: 200; /* Fica acima de tudo */
+    z-index: 200;
     justify-content: center;
     align-items: center;
     padding: 20px;
@@ -32,8 +32,8 @@ body {
     text-align: center;
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
     max-width: 500px;
-    position: relative; /* Para o botão 'X' */
-    padding-top: 40px; /* Espaço para o 'X' */
+    position: relative;
+    padding-top: 40px;
 }
 .close-btn {
     position: absolute;
@@ -86,9 +86,9 @@ body {
     color: #888;
 }
 
-/* ===== ESTILOS DO MENU (AGORA ESCONDIDO) ===== */
+/* ===== ESTILOS DO MENU (ESCONDIDO) ===== */
 #menu-container {
-    display: none; /* Começa escondido */
+    display: none;
     width: 100%;
     max-width: 600px;
     background-color: #ffffff;
@@ -132,7 +132,7 @@ body {
 #btn-dificil { background-color: #d9534f; }
 
 
-/* ===== ESTILO DO JOGO (COMEÇA ESCONDIDO) ===== */
+/* ===== ESTILO DO JOGO (ESCONDIDO) ===== */
 #game-container {
     display: none; 
     width: 100%;
@@ -210,7 +210,9 @@ progress[id="energia-bar"]::-webkit-progress-value { background-color: #5bc0de; 
     color: white;
     transition: background-color 0.2s;
     margin: 5px;
-    flex-basis: 45%;
+    /* MUDANÇA: Ajuste para 3 botões por linha */
+    flex-basis: 30%; 
+    min-width: 150px; /* Garante que não fiquem muito pequenos */
 }
 #botoes-acao button:hover {
     background-color: #4a9d4a;
