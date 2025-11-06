@@ -6,9 +6,61 @@ body {
     align-items: center;
     padding: 20px;
     color: #333;
+    min-height: 100vh;
+    box-sizing: border-box;
 }
 
+/* ===== NOVO: ESTILOS DO MENU ===== */
+#menu-container {
+    width: 100%;
+    max-width: 600px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+#menu-container h1 {
+    color: #d9534f;
+    margin-top: 0;
+}
+#menu-container p {
+    font-size: 1.1em;
+    color: #555;
+}
+#botoes-modo {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Espaço entre os botões */
+    margin-top: 30px;
+}
+.btn-modo {
+    padding: 15px 20px;
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.btn-modo:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Cores dos botões de modo */
+#btn-treinamento { background-color: #5bc0de; }
+#btn-facil { background-color: #5cb85c; }
+#btn-medio { background-color: #f0ad4e; }
+#btn-dificil { background-color: #d9534f; }
+
+
+/* ===== ESTILO DO JOGO ===== */
+/* MUDANÇA: Jogo começa escondido */
 #game-container {
+    display: none; 
     width: 100%;
     max-width: 600px;
     background-color: #ffffff;
