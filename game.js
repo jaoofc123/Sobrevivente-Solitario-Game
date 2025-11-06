@@ -1,12 +1,10 @@
-// O listener DOMContentLoaded agora configura TUDO, mas o jogo só começa
-// quando a função iniciarJogo é chamada.
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- Referências ao Menu e Jogo ---
     const menuContainer = document.getElementById('menu-container');
     const gameContainer = document.getElementById('game-container');
     
-    // --- Referências ao Log de Atualização (NOVO) ---
+    // --- Referências ao Log de Atualização ---
     const updateLogOverlay = document.getElementById('update-log-overlay');
     const btnCloseUpdate = document.getElementById('btn-close-update');
     const btnEntendi = document.getElementById('btn-entendi');
@@ -21,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const carneStat = document.getElementById('carne-stat');
     const madeiraStat = document.getElementById('madeira-stat');
     const baseStat = document.getElementById('base-stat');
+    const medkitStat = document.getElementById('medkit-stat'); // NOVO
     const vidaBar = document.getElementById('vida-bar');
     const vidaValor = document.getElementById('vida-valor');
     const energiaBar = document.getElementById('energia-bar');
@@ -35,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnDescansar = document.getElementById('btn-descansar');
     const btnComer = document.getElementById('btn-comer');
     const btnBase = document.getElementById('btn-base');
+    const btnUsarMedkit = document.getElementById('btn-usar-medkit'); // NOVO
 
     // --- Referências aos Pop-ups ---
     const minigameOverlay = document.getElementById('minigame-overlay');
@@ -51,8 +51,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const vitoriaTitulo = document.getElementById('vitoria-titulo');
     const vitoriaTextoDias = document.getElementById('vitoria-texto-dias');
 
-    // --- Variáveis de Estado do Jogo (Definidas no início) ---
-    let vida, energia, carne, madeira, nivelBase, dia, diasObjetivo;
+    // --- Variáveis de Estado do Jogo ---
+    let vida, energia, carne, madeira, nivelBase, dia, diasObjetivo, medkit, nivelMaximoBaseAlcancado;
     let pontosAcaoAtuais, cacasConsecutivas, coletasConsecutivas;
     let jogoAtivo, acaoEmProgresso;
     
@@ -62,16 +62,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // ===== FUNÇÃO DE INÍCIO DE JOGO =====
     // ==========================================================
     function iniciarJogo(objetivo, modoTexto) {
-        // 1. Esconde o menu e mostra o jogo
         menuContainer.style.display = 'none';
         gameContainer.style.display = 'block';
 
-        // 2. Define as variáveis de estado iniciais
+        // Define as variáveis de estado iniciais
         vida = 100;
         energia = 100;
         carne = 3;
         madeira = 0;
+        medkit = 0; // NOVO
         nivelBase = 0;
+        nivelMaximoBaseAlcancado = 0; // NOVO
         dia = 1;
         diasObjetivo = objetivo;
         pontosAcaoAtuais = PONTOS_ACAO_POR_DIA;
@@ -80,20 +81,16 @@ document.addEventListener('DOMContentLoaded', () => {
         jogoAtivo = true;
         acaoEmProgresso = false;
 
-        // 3. Configura a UI do jogo
         modoJogoTitulo.textContent = modoTexto;
-        logArea.innerHTML = ''; // Limpa o log de jogos anteriores
+        logArea.innerHTML = '';
         adicionarLog(`Começa o modo ${modoTexto}. Seu objetivo: sobreviver ${diasObjetivo} dias.`, "log-evento");
 
-        // 4. Atualiza a tela pela primeira vez
         atualizarStatus();
     }
-    // ==========================================================
-    // ===== FUNÇÃO PARA FECHAR O LOG DE ATUALIZAÇÃO (NOVO) =====
-    // ==========================================================
+    
     function fecharUpdateLog() {
         updateLogOverlay.style.display = 'none';
-        menuContainer.style.display = 'block'; // Mostra o menu
+        menuContainer.style.display = 'block';
     }
 
     // --- Função Mestra de Ação ---
@@ -106,7 +103,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         await new Promise(r => setTimeout(r, 500)); 
         
-        fnSucesso(); 
+        // A fnSucesso agora pode ser assíncrona (para o Medkit pop-up)
+        await fnSucesso(); 
 
         if (pontosAcaoAtuais <= 0) {
             let dividaAcao = Math.abs(pontosAcaoAtuais);
@@ -139,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
             energia -= custoEnergia;
             return true;
         } else {
+            // MUDANÇA: Nova regra de penalidade
             const custoVida = (custoEnergia / 5) * 10;
             
             adicionarLog(`Sem energia! Você força o limite, custando ${custoVida} de Vida.`, "log-ruim");
@@ -152,6 +151,16 @@ document.addEventListener('DOMContentLoaded', () => {
             return true;
         }
     }
+    
+    // --- NOVO: Chance de encontrar Medkit ---
+    async function chanceEncontrarMedkit(tipoAcao) {
+        if (Math.random() < 0.10) { // 10% chance
+            medkit++;
+            await mostrarAlerta("Sorte!", `Você encontrou 1 MEDKIT enquanto ${tipoAcao === 'caça' ? 'caçava' : 'coletava'}!`);
+            adicionarLog("Você encontrou 1 MEDKIT!", "log-bom");
+        }
+    }
+
 
     // --- Ações Específicas ---
     
@@ -160,21 +169,27 @@ document.addEventListener('DOMContentLoaded', () => {
             adicionarLog("Você caçou demais. Faça outra atividade.", "log-ruim");
             return;
         }
-        if (!pagarCustoEnergia(30)) return;
+        // MUDANÇA: Custo 30 Energia
+        if (!pagarCustoEnergia(30)) return; 
         
-        realizarAcao(3, 
-            () => { // fnSucesso
+        // MUDANÇA: Custo 2 AçD
+        realizarAcao(2, 
+            async () => { // fnSucesso (agora async)
                 let carnesGanhas = 0;
+                // MUDANÇA: Novas chances de carne
                 const chance = Math.random();
                 if (chance < 0.35) carnesGanhas = 1;
-                else if (chance < 0.65) carnesGanhas = 2;
-                else if (chance < 0.85) carnesGanhas = 3;
-                else carnesGanhas = 4;
+                else if (chance < 0.65) carnesGanhas = 2; // 30%
+                else if (chance < 0.90) carnesGanhas = 3; // 25%
+                else carnesGanhas = 4; // 10%
                 
                 carne += carnesGanhas;
                 adicionarLog(`BOA! Você conseguiu ${carnesGanhas} carne(s).`, "log-bom");
                 cacasConsecutivas++;
                 coletasConsecutivas = 0;
+                
+                // MUDANÇA: Chance de Medkit
+                await chanceEncontrarMedkit('caça');
             }
         );
     }
@@ -184,20 +199,26 @@ document.addEventListener('DOMContentLoaded', () => {
             adicionarLog("Você coletou demais. Faça outra atividade.", "log-ruim");
             return;
         }
+        // MUDANÇA: Custo 35 Energia
         if (!pagarCustoEnergia(35)) return;
 
-        realizarAcao(2,
-            () => { // fnSucesso
+        // MUDANÇA: Custo 3 AçD
+        realizarAcao(3,
+            async () => { // fnSucesso (agora async)
                 const ganhoMadeira = Math.floor(Math.random() * 3) + 1;
                 madeira += ganhoMadeira;
                 adicionarLog(`Você coletou ${ganhoMadeira} de madeira.`, "log-bom");
                 coletasConsecutivas++;
                 cacasConsecutivas = 0;
+                
+                // MUDANÇA: Chance de Medkit
+                await chanceEncontrarMedkit('madeira');
             }
         );
     }
 
     function acaoDescansar() {
+        // MUDANÇA: Custo 50 Energia
         if (!pagarCustoEnergia(50)) return;
 
         realizarAcao(1,
@@ -215,7 +236,18 @@ document.addEventListener('DOMContentLoaded', () => {
     async function acaoMelhorarBase() {
         if (!jogoAtivo || acaoEmProgresso) return;
         
-        const custoBaseMadeira = (nivelBase + 1) * 10;
+        // MUDANÇA: Lógica de Custo com Desconto
+        let custoBaseMadeira;
+        const custoOriginal = (nivelBase + 1) * 10;
+
+        if (nivelBase + 1 <= nivelMaximoBaseAlcancado) {
+            // Aplicar desconto de 25%
+            custoBaseMadeira = Math.floor(custoOriginal * 0.75);
+            adicionarLog(`Custo de reconstrução reduzido para ${custoBaseMadeira} de madeira!`, "log-bom");
+        } else {
+            custoBaseMadeira = custoOriginal;
+        }
+        
         if (madeira < custoBaseMadeira) {
             adicionarLog(`Você precisa de ${custoBaseMadeira} de madeira para melhorar a base.`, "log-ruim");
             return;
@@ -224,11 +256,18 @@ document.addEventListener('DOMContentLoaded', () => {
             adicionarLog(`Você precisa de um dia inteiro (4 AçD) para melhorar a base.`, "log-ruim");
             return;
         }
+        // MUDANÇA: Custo 50 Energia
         if (!pagarCustoEnergia(50)) return;
 
         acaoEmProgresso = true;
         madeira -= custoBaseMadeira;
         nivelBase++;
+        
+        // MUDANÇA: Atualiza o Nível Máximo
+        if (nivelBase > nivelMaximoBaseAlcancado) {
+            nivelMaximoBaseAlcancado = nivelBase;
+        }
+        
         pontosAcaoAtuais = 0;
         cacasConsecutivas = 0;
         coletasConsecutivas = 0;
@@ -266,6 +305,20 @@ document.addEventListener('DOMContentLoaded', () => {
             atualizarStatus();
         } else {
             adicionarLog("Você não tem carne no inventário!", "log-ruim");
+        }
+    }
+    
+    // NOVO: Ação de Usar Medkit
+    function acaoUsarMedkit() {
+        if (!jogoAtivo || acaoEmProgresso) return;
+        if (medkit > 0) {
+            medkit--;
+            vida += 50;
+            if (vida > 100) vida = 100;
+            adicionarLog("Você usou um Medkit e recuperou 50 de Vida!", "log-bom");
+            atualizarStatus();
+        } else {
+            adicionarLog("Você não tem Medkits!", "log-ruim");
         }
     }
 
@@ -339,6 +392,13 @@ document.addEventListener('DOMContentLoaded', () => {
             let itensEncontrados = Math.floor(Math.random() * 5) + 1;
             let carneEncontrada = 0;
             let madeiraEncontrada = 0;
+            let medkitEncontrado = 0;
+            let msgItens = [];
+            
+            if (Math.random() < 0.20) { // MUDANÇA: 20% chance de Medkit no baú
+                medkit++;
+                medkitEncontrado = 1;
+            }
             
             for (let i = 0; i < itensEncontrados; i++) {
                 if (Math.random() < 0.6) carneEncontrada++;
@@ -346,7 +406,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             carne += carneEncontrada;
             madeira += madeiraEncontrada;
-            let msg = `Você encontrou um baú naufragado! Dentro havia: ${carneEncontrada} carne(s) e ${madeiraEncontrada} madeira(s).`;
+            
+            if (carneEncontrada > 0) msgItens.push(`${carneEncontrada} carne(s)`);
+            if (madeiraEncontrada > 0) msgItens.push(`${madeiraEncontrada} madeira(s)`);
+            if (medkitEncontrado > 0) msgItens.push(`1 MEDKIT!`);
+            
+            let msg = `Você encontrou um baú naufragado! Dentro havia: ${msgItens.join(', ')}.`;
             await mostrarAlerta("Sorte!", msg);
             adicionarLog(msg, "log-bom");
         }
@@ -439,6 +504,7 @@ document.addEventListener('DOMContentLoaded', () => {
         energiaValor.textContent = `${energia}/100`;
         carneStat.textContent = carne;
         madeiraStat.textContent = madeira;
+        medkitStat.textContent = medkit; // NOVO
         acdStat.textContent = pontosAcaoAtuais; 
 
         let nomeBase = "Nenhuma (Nv. 0)";
@@ -448,16 +514,26 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (nivelBase >= 4) nomeBase = `Fortaleza (Nv. ${nivelBase})`;
         baseStat.textContent = nomeBase;
 
-        // MUDANÇA: Texto do botão da base corrigido
-        btnBase.textContent = `Melhorar Base (Custa 4 AçD, 50 Energia)`;
+        // MUDANÇA: Lógica de Custo com Desconto no Texto
+        let custoBaseMadeira;
+        const custoOriginal = (nivelBase + 1) * 10;
+        if (nivelBase + 1 <= nivelMaximoBaseAlcancado) {
+            custoBaseMadeira = Math.floor(custoOriginal * 0.75);
+            btnBase.textContent = `Reparar Base (Custa 4 AçD, 50 Energia, ${custoBaseMadeira} Madeira)`;
+        } else {
+            custoBaseMadeira = custoOriginal;
+            btnBase.textContent = `Melhorar Base (Custa 4 AçD, 50 Energia, ${custoBaseMadeira} Madeira)`;
+        }
+        
         diaStatus.textContent = `Dia ${dia} de ${diasObjetivo}`;
         
         // Lógica de desativar botões
         btnCacar.disabled = (acaoEmProgresso || cacasConsecutivas >= 2);
         btnMadeira.disabled = (acaoEmProgresso || coletasConsecutivas >= 2);
         btnDescansar.disabled = (energia < 50 || acaoEmProgresso);
-        btnBase.disabled = (madeira < (nivelBase + 1) * 10 || pontosAcaoAtuais < 4 || acaoEmProgresso || energia < 50);
+        btnBase.disabled = (madeira < custoBaseMadeira || pontosAcaoAtuais < 4 || acaoEmProgresso || energia < 50);
         btnComer.disabled = (carne <= 0 || acaoEmProgresso);
+        btnUsarMedkit.disabled = (medkit <= 0 || acaoEmProgresso); // NOVO
     }
 
     function desativarTodosBotoes() {
@@ -468,6 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnDescansar.disabled = true;
         btnComer.disabled = true;
         btnBase.disabled = true;
+        btnUsarMedkit.disabled = true;
     }
 
     function gameOver() {
@@ -501,4 +578,5 @@ document.addEventListener('DOMContentLoaded', () => {
     btnDescansar.addEventListener('click', acaoDescansar);
     btnBase.addEventListener('click', acaoMelhorarBase);
     btnComer.addEventListener('click', acaoComer);
+    btnUsarMedkit.addEventListener('click', acaoUsarMedkit); // NOVO
 });
