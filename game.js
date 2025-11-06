@@ -1,16 +1,23 @@
-// O listener DOMContentLoaded agora configura o MENU
+// O listener DOMContentLoaded agora configura TUDO, mas o jogo só começa
+// quando a função iniciarJogo é chamada.
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- Referências aos Elementos do MENU ---
+    // --- Referências ao Menu e Jogo ---
     const menuContainer = document.getElementById('menu-container');
     const gameContainer = document.getElementById('game-container');
     
+    // --- Referências ao Log de Atualização (NOVO) ---
+    const updateLogOverlay = document.getElementById('update-log-overlay');
+    const btnCloseUpdate = document.getElementById('btn-close-update');
+    const btnEntendi = document.getElementById('btn-entendi');
+
+    // --- Referências aos Botões do Menu ---
     const btnTreinamento = document.getElementById('btn-treinamento');
     const btnFacil = document.getElementById('btn-facil');
     const btnMedio = document.getElementById('btn-medio');
     const btnDificil = document.getElementById('btn-dificil');
 
-    // --- Referências aos Elementos do JOGO ---
+    // --- Referências aos Elementos do Jogo ---
     const carneStat = document.getElementById('carne-stat');
     const madeiraStat = document.getElementById('madeira-stat');
     const baseStat = document.getElementById('base-stat');
@@ -21,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const diaStatus = document.getElementById('dia-status');
     const logArea = document.getElementById('log-area');
     const acdStat = document.getElementById('acd-stat');
-    const modoJogoTitulo = document.getElementById('modo-jogo-titulo'); // Novo
+    const modoJogoTitulo = document.getElementById('modo-jogo-titulo');
 
     const btnCacar = document.getElementById('btn-cacar');
     const btnMadeira = document.getElementById('btn-madeira');
@@ -41,10 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const alertaOk = document.getElementById('alerta-ok');
 
     const vitoriaOverlay = document.getElementById('vitoria-overlay');
-    const vitoriaTitulo = document.getElementById('vitoria-titulo'); // Novo
-    const vitoriaTextoDias = document.getElementById('vitoria-texto-dias'); // Novo
+    const vitoriaTitulo = document.getElementById('vitoria-titulo');
+    const vitoriaTextoDias = document.getElementById('vitoria-texto-dias');
 
-    // --- Variáveis de Estado do Jogo (Globais, mas definidas no início) ---
+    // --- Variáveis de Estado do Jogo (Definidas no início) ---
     let vida, energia, carne, madeira, nivelBase, dia, diasObjetivo;
     let pontosAcaoAtuais, cacasConsecutivas, coletasConsecutivas;
     let jogoAtivo, acaoEmProgresso;
@@ -52,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const PONTOS_ACAO_POR_DIA = 4;
 
     // ==========================================================
-    // ===== NOVO: FUNÇÃO DE INÍCIO DE JOGO =====
+    // ===== FUNÇÃO DE INÍCIO DE JOGO =====
     // ==========================================================
     function iniciarJogo(objetivo, modoTexto) {
         // 1. Esconde o menu e mostra o jogo
@@ -75,18 +82,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 3. Configura a UI do jogo
         modoJogoTitulo.textContent = modoTexto;
+        logArea.innerHTML = ''; // Limpa o log de jogos anteriores
         adicionarLog(`Começa o modo ${modoTexto}. Seu objetivo: sobreviver ${diasObjetivo} dias.`, "log-evento");
 
-        // 4. Conecta os botões de ação (só precisa fazer isso uma vez)
-        // (Eles já estão conectados lá embaixo, no fim do script)
-
-        // 5. Atualiza a tela pela primeira vez
+        // 4. Atualiza a tela pela primeira vez
         atualizarStatus();
     }
     // ==========================================================
-    // ===== FIM DA FUNÇÃO DE INÍCIO =====
+    // ===== FUNÇÃO PARA FECHAR O LOG DE ATUALIZAÇÃO (NOVO) =====
     // ==========================================================
-
+    function fecharUpdateLog() {
+        updateLogOverlay.style.display = 'none';
+        menuContainer.style.display = 'block'; // Mostra o menu
+    }
 
     // --- Função Mestra de Ação ---
     async function realizarAcao(custoAcd, fnSucesso) {
@@ -477,6 +485,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- CONECTORES DE BOTÕES (Menu e Jogo) ---
 
+    // Conectores do Log de Atualização
+    btnCloseUpdate.addEventListener('click', fecharUpdateLog);
+    btnEntendi.addEventListener('click', fecharUpdateLog);
+    
     // Conectores do Menu
     btnTreinamento.addEventListener('click', () => iniciarJogo(10, "Treinamento"));
     btnFacil.addEventListener('click', () => iniciarJogo(50, "Fácil"));
