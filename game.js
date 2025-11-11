@@ -103,7 +103,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         await new Promise(r => setTimeout(r, 500)); 
         
-        // fnSucesso agora é async para lidar com Medkit, Baú e Ataque
         await fnSucesso(); 
 
         if (pontosAcaoAtuais <= 0) {
@@ -153,7 +152,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // --- Chance de encontrar Medkit ---
     async function chanceEncontrarMedkit(tipoAcao) {
-        if (Math.random() < 0.10) { // 10% chance
+        if (Math.random() < 0.10) { // 10% chance (Mantido)
             medkit++;
             await mostrarAlerta("Sorte!", `Você encontrou 1 MEDKIT enquanto ${tipoAcao === 'caça' ? 'caçava' : 'coletava'}!`);
             adicionarLog("Você encontrou 1 MEDKIT!", "log-bom");
@@ -184,10 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 cacasConsecutivas++;
                 coletasConsecutivas = 0;
                 
-                // MUDANÇA V1.2: Eventos de Ação
                 await chanceEncontrarMedkit('caça');
                 await chanceEncontrarBauAcao();
-                await chanceSerAtacado(); // Apenas na caça
+                // MUDANÇA V1.3: Chance de Ataque reduzida para 10%
+                await chanceSerAtacado(0.10); 
             }
         );
     }
@@ -207,19 +206,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 coletasConsecutivas++;
                 cacasConsecutivas = 0;
                 
-                // MUDANÇA V1.2: Eventos de Ação
                 await chanceEncontrarMedkit('madeira');
                 await chanceEncontrarBauAcao();
+                // MUDANÇA V1.3: Chance de Ataque de 5%
+                await chanceSerAtacado(0.05);
             }
         );
     }
 
     function acaoDescansar() {
-        if (!pagarCustoEnergia(50)) return;
+        // MUDANÇA V1.3: Custo de energia reduzido
+        if (!pagarCustoEnergia(25)) return;
 
         realizarAcao(1,
             () => { // fnSucesso
-                let vidaRecuperada = 20;
+                // MUDANÇA V1.3: Cura de vida reduzida
+                let vidaRecuperada = 10;
                 vida += vidaRecuperada;
                 if (vida > 100) vida = 100;
                 adicionarLog(`Você descansou e recuperou ${vidaRecuperada} de vida.`, "log-bom");
@@ -250,12 +252,24 @@ document.addEventListener('DOMContentLoaded', () => {
             adicionarLog(`Você precisa de um dia inteiro (4 AçD) para melhorar a base.`, "log-ruim");
             return;
         }
-        if (!pagarCustoEnergia(50)) return;
+        // MUDANÇA V1.3: Custo de energia reduzido
+        if (!pagarCustoEnergia(40)) return;
 
         acaoEmProgresso = true;
         madeira -= custoBaseMadeira;
         nivelBase++;
         
+        adicionarLog(`VOCÊ PASSA O DIA MELHORANDO SUA BASE! (Nível ${nivelBase})`, "log-bom");
+
+        // MUDANÇA V1.3: Chance de Bônus de Nível
+        if (Math.random() < 0.01) { // 1% chance
+            await new Promise(r => setTimeout(r, 500)); // Pequena pausa
+            nivelBase++;
+            await mostrarAlerta("Sorte na Construção!", `Sobrou madeira e você teve uma ótima ideia! Você conseguiu melhorar a base DIRETAMENTE para o Nível ${nivelBase}!`);
+            adicionarLog(`BÔNUS! Sua base pulou para o Nível ${nivelBase}!`, "log-bom");
+        }
+        
+        // Atualiza o Nível Máximo (agora depois do bônus)
         if (nivelBase > nivelMaximoBaseAlcancado) {
             nivelMaximoBaseAlcancado = nivelBase;
         }
@@ -263,7 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
         pontosAcaoAtuais = 0;
         cacasConsecutivas = 0;
         coletasConsecutivas = 0;
-        adicionarLog(`VOCÊ PASSA O DIA MELHORANDO SUA BASE! (Nível ${nivelBase})`, "log-bom");
         
         atualizarStatus(); 
 
@@ -340,7 +353,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- NOVO (V1.2): Lógica centralizada do Baú ---
     async function eventoExecutarBau(tituloAlerta) {
         let itensEncontrados = Math.floor(Math.random() * 5) + 1;
         let carneEncontrada = 0;
@@ -348,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let medkitEncontrado = 0;
         let msgItens = [];
         
-        if (Math.random() < 0.20) { // 20% chance de Medkit no baú
+        if (Math.random() < 0.20) { 
             medkit++;
             medkitEncontrado = 1;
         }
@@ -373,19 +385,27 @@ document.addEventListener('DOMContentLoaded', () => {
         adicionarLog(msg, "log-bom");
     }
 
-    // --- NOVO (V1.2): Chance de encontrar Baú na Ação ---
     async function chanceEncontrarBauAcao() {
         if (Math.random() < 0.20) { // 20% chance
             await eventoExecutarBau("Tesouro Encontrado!");
         }
     }
 
-    // --- NOVO (V1.2): Chance de ser Atacado na Caça ---
-    async function chanceSerAtacado() {
-        if (!jogoAtivo) return; // Não atacar se o jogo já acabou
+    // MUDANÇA V1.3: Função de ataque agora recebe a chance e tem chance de defesa
+    async function chanceSerAtacado(chanceAtaque) {
+        if (!jogoAtivo) return; 
 
-        if (Math.random() < 0.25) { // 25% chance
-            await mostrarAlerta("PERIGO!", "Você foi atacado por um animal selvagem durante a caça!");
+        if (Math.random() < chanceAtaque) { // Usa a chance (10% ou 5%)
+            
+            // NOVO: Chance de Defesa
+            if (Math.random() < 0.05) { // 5% chance de defesa
+                await mostrarAlerta("DEFESA!", "Você teve sorte e conseguiu espantar o animal com seu rifle!");
+                adicionarLog("Ufa! Você se defendeu do ataque!", "log-bom");
+                return; // Sai da função, sem dano
+            }
+
+            // Se não defendeu, continua para o dano
+            await mostrarAlerta("PERIGO!", "Você foi atacado por um animal selvagem!");
             
             const chanceDano = Math.random();
             let dano = 0;
@@ -407,8 +427,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 vida = 0;
                 gameOver();
             }
-            // A atualização de status será chamada no final da ação principal,
-            // mas podemos chamar aqui para refletir a perda de vida imediatamente
             atualizarStatus(); 
         }
     }
@@ -452,7 +470,6 @@ document.addEventListener('DOMContentLoaded', () => {
             nivelBase = 1;
             adicionarLog("Sua base foi quase destruída! (Nível 1)", "log-ruim");
         
-        // MUDANÇA V1.2: Bloco de sorte agora usa a função helper
         } else if (chance > 0.9) { // Sorte (10%)
             await eventoExecutarBau("Sorte!");
         }
@@ -555,23 +572,26 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (nivelBase >= 4) nomeBase = `Fortaleza (Nv. ${nivelBase})`;
         baseStat.textContent = nomeBase;
 
+        // MUDANÇA V1.3: Atualiza custos de energia nos botões
+        btnDescansar.textContent = 'Descansar (Custa 1 AçD, 25 Energia)';
+        
         let custoBaseMadeira;
         const custoOriginal = (nivelBase + 1) * 10;
         if (nivelBase + 1 <= nivelMaximoBaseAlcancado) {
             custoBaseMadeira = Math.floor(custoOriginal * 0.75);
-            btnBase.textContent = `Reparar Base (Custa 4 AçD, 50 Energia, ${custoBaseMadeira} Madeira)`;
+            btnBase.textContent = `Reparar Base (Custa 4 AçD, 40 Energia, ${custoBaseMadeira} Madeira)`;
         } else {
             custoBaseMadeira = custoOriginal;
-            btnBase.textContent = `Melhorar Base (Custa 4 AçD, 50 Energia, ${custoBaseMadeira} Madeira)`;
+            btnBase.textContent = `Melhorar Base (Custa 4 AçD, 40 Energia, ${custoBaseMadeira} Madeira)`;
         }
         
         diaStatus.textContent = `Dia ${dia} de ${diasObjetivo}`;
         
-        // Lógica de desativar botões
+        // MUDANÇA V1.3: Lógica de desativar botões com novos custos
         btnCacar.disabled = (acaoEmProgresso || cacasConsecutivas >= 2);
         btnMadeira.disabled = (acaoEmProgresso || coletasConsecutivas >= 2);
-        btnDescansar.disabled = (energia < 50 || acaoEmProgresso);
-        btnBase.disabled = (madeira < custoBaseMadeira || pontosAcaoAtuais < 4 || acaoEmProgresso || energia < 50);
+        btnDescansar.disabled = (energia < 25 || acaoEmProgresso); // Custo 25
+        btnBase.disabled = (madeira < custoBaseMadeira || pontosAcaoAtuais < 4 || acaoEmProgresso || energia < 40); // Custo 40
         btnComer.disabled = (carne <= 0 || acaoEmProgresso);
         btnUsarMedkit.disabled = (medkit <= 0 || acaoEmProgresso);
     }
